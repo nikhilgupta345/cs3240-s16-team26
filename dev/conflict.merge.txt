@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+
+{% load staticfiles %} <!-- New line -->
+
+<html>
+
+    <head>
+        <title>Django</title>
+    </head>
+
+    <body>
+        <h1>Rango says...</h1>
+<<<<<<< HEAD
+        Hello world! <strong>{{ boldmessage }}</strong><br />
+=======
+        Jello world! <strong>{{ boldmessage }}</strong><br />
+>>>>>>> merge-conflict
+        <a href="/rango/about/">About</a><br />
+        <img src="{% static "images/rango.jpeg" %}" alt="Picture of Rango" /> <!-- New line -->
+        <p>Test test test</p>
+    </body>
+
+</html>
