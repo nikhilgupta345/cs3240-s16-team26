@@ -64,3 +64,6 @@ target/
 # Other Stuff
 .DS_Store
 .gitignore.swp
+
+# Vim swap files
+*.swp
