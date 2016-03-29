@@ -22,7 +22,7 @@ h1 {
 }
 .panel-login>.panel-heading a{
 	text-decoration: none;
-	color: #666;
+	color: #999;
 	font-weight: bold;
 	font-size: 15px;
 	-webkit-transition: all 0.1s linear;
@@ -30,7 +30,7 @@ h1 {
 	transition: all 0.1s linear;
 }
 .panel-login>.panel-heading a.active{
-	color: #029f5b;
+	color: #336699;
 	font-size: 18px;
 }
 .panel-login>.panel-heading hr{
@@ -88,7 +88,7 @@ h1 {
 }
 
 .btn-register {
-	background-color: #1CB94E;
+	background-color: #59B2E0;
 	outline: none;
 	color: #fff;
 	font-size: 14px;
