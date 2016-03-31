@@ -19,5 +19,5 @@ from . import views
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^$', views.login_redirect),
-    url(r'/', include('safecollabapp.urls')),
+    url(r'', include('safecollabapp.urls')),
 ]
