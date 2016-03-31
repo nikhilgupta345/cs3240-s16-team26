@@ -4,6 +4,10 @@ body {
     background-size: cover;
 }
 
+#login-message {
+  text-align: center;
+  color: red;
+}
 .footer {
   position: absolute;
   bottom:0;
