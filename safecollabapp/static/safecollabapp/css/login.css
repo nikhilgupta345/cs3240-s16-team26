@@ -1,5 +1,5 @@
 body {
-    padding-top: 90px;
+    padding-top: 40px;
     background-image: url("http://www.freebiesgallery.com/wp-content/uploads/2014/02/blurred-background-2.jpg");
     background-size: cover;
 }
@@ -22,9 +22,12 @@ body {
   text-align:center;
 }
 
-h1 {
+h1, h5 {
   text-align: center;
   color: #ffffff;
+}
+#form-container {
+	height:100%;
 }
 .panel-login {
 	border-color: #ccc;

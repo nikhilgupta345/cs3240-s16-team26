@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 #from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
@@ -9,6 +9,9 @@ import json
 from django.http import HttpResponse
 
 def index(request):
+    if not request.user.is_authenticated(): # If not logged in send back to login page
+        return redirect('/login/')
+
     return render(request, 'index.html')
 
 def login(request): # Home page and login screen
@@ -22,12 +25,13 @@ def login(request): # Home page and login screen
 
         username = request.POST.get('username')
         password = request.POST.get('password')
+        remember = request.POST.get('remember') # Remember me checkbox
 
         user = authenticate(username=username, password=password) # Check if this username/password combo exists
         if user is not None:
             auth_login(request, user) # Log the user in if they do
-            #TODO: add check box for keep logged in
-            request.session['username'] = username # Set a session so they're remembered next time
+            if(remember != None):
+                request.session['username'] = username # Set a session so they're remembered next time
             return redirect('/index/')
         else:
             context_dict['login_message'] = 'Invalid username and password combination.'
@@ -38,10 +42,7 @@ def login(request): # Home page and login screen
     return render(request, 'login.html', context_dict)
 
 def logout(request):
-    try:
-        del request.session['username'] # Delete the session cookie
-    except KeyError:
-        pass
+    auth_logout(request)
 
     return redirect('/', permanent=True) # Redirect to front page
 
