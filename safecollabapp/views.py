@@ -8,6 +8,9 @@ from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
 
+def recover_password(request):
+    return render(request, 'recover_password.html');
+    
 def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
@@ -113,7 +116,7 @@ def register(request):
 
                     auth_login(request, user) # Log the user in if they do
                     print('After login')
-                    #TODO: add check box for keep logged in
+                    
                     request.session['username'] = username # Set a session so they're remembered next time
                     context_dict['response'] = 'redirect_index'
                     print('SUCCESS')
