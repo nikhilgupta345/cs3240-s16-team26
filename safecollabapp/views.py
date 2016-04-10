@@ -1,21 +1,105 @@
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 #from django.contrib.auth import login as auth_login
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.shortcuts import redirect
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
 
+#---------------------------------
+# added for file upload example
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
+
+from safecollabapp.models import Document
+from safecollabapp.forms import DocumentForm
+
+
+def list(request):
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            newdoc = Document(docfile=request.FILES['docfile'])
+            newdoc.save()
+
+            # Redirect to the document list after POST
+            return HttpResponseRedirect(reverse('safecollabapp.views.list'))
+    else:
+        form = DocumentForm()  # A empty, unbound form
+
+    # Load documents for the list page
+    documents = Document.objects.all()
+
+    # Render list page with the documents and the form
+    return render_to_response(
+        'list.html',
+        {'documents': documents, 'form': form},
+        context_instance=RequestContext(request)
+    )
+
+#---------------------------------
+
+# Uncomplete at the moment.
 def recover_password(request):
     return render(request, 'recover_password.html');
-    
+
+# Returns whether a user is a site-manager or not
+def is_manager(user):
+    manager_group = Group.objects.get(name='site-manager')
+    return user in manager_group.user_set.all()
+
+# Returns a list of Users who are Site-Managers
+def get_managers():
+    return User.objects.filter(groups__name='site-manager')
+
+def add_manager(request):
+    if request.method == 'POST': # Check if they submitted the form to add an SM
+        if not is_manager(request.user): # Check if they even have permission to add a new SM
+            return redirect('/index/')
+
+        username = request.POST.get('username') # Get the username that they wish to add
+        context_dict = {
+            'response':''
+        }
+
+        if len(get_managers()) == 3:
+            context_dict['response'] = 'There are already 3 superusers -- you cannot add anymore!'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+        try:
+            new_manager = User.objects.get(username=username)
+        except:
+            context_dict['response'] = 'Could not find a user with that username'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+            
+        if new_manager is not None: # User exists
+            if is_manager(new_manager): # Already a manager
+                context_dict['response'] = 'That user is already a Site Manager!'
+            else:
+                manager_group = Group.objects.get(name='site-manager')
+                new_manager.groups.add(manager_group)
+                context_dict['response'] = 'Successfully added ' + username + ' as a Site Manager.'
+        
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+    else:
+        return redirect('/index/')
+
 def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
 
-    return render(request, 'index.html')
+    # Is this user a manager, and the list of current site-managers
+    context_dict = {
+        'is_manager': is_manager(request.user),
+        'site_managers_list' : get_managers(),
+    }
+
+    return render(request, 'index.html', context_dict)
 
 def login(request): # Home page and login screen
     # Initially empty as we don't know if their password was invalid
