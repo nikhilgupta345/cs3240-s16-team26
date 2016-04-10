@@ -1,21 +1,61 @@
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 #from django.contrib.auth import login as auth_login
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.shortcuts import redirect
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
 
+# Uncomplete at the moment.
 def recover_password(request):
     return render(request, 'recover_password.html');
-    
+
+# Returns whether a user is a site-manager or not
+def is_manager(user):
+    manager_group = Group.objects.get(name='site-manager')
+    return user in manager_group.user_set.all()
+
+# Returns a list of Users who are Site-Managers
+def get_managers():
+    return User.objects.filter(groups__name='site-manager')
+
+def add_manager(request):
+    if request.method == 'POST': # Check if they submitted the form to add an SM
+        if not is_manager(request.user): # Check if they even have permission to add a new SM
+            return redirect('/index/')
+
+        username = request.POST.get('username')
+        try:
+            new_manager = User.objects.get(username=username)
+        except:
+            return redirect('/index/')
+            
+        if new_manager is not None: # User exists
+            if is_manager(new_manager): # Already a manager
+                return redirect('/index/')
+            else:
+                manager_group = Group.objects.get(name='site-manager')
+                new_manager.groups.add(manager_group)
+                return redirect('/index/')
+        else:
+            return redirect('/index/')
+
+    else:
+        return redirect('/index/')
+
 def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
 
-    return render(request, 'index.html')
+    # Is this user a manager, and the list of current site-managers
+    context_dict = {
+        'is_manager': is_manager(request.user),
+        'site_managers_list' : get_managers(),
+    }
+
+    return render(request, 'index.html', context_dict)
 
 def login(request): # Home page and login screen
     # Initially empty as we don't know if their password was invalid
