@@ -55,12 +55,15 @@
                       <p>Some content in menu 1.</p>
                     </div>
                     <div id="assign-manager" class="tab-pane fade">
+                      <div id="addmanager-response"></div><br />
                       Current Site-Managers: <br/>
-                      <ul>
-                        {% for user in site_managers_list %}
-                        <li> {{ user.username }} </li>
-                        {% endfor %}
-                      </ul>
+                      <div id="manager-list">
+                        <ul>
+                          {% for user in site_managers_list %}
+                          <li> {{ user.username }} </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
                       <form action="/add_manager/" method="POST" id="form-addmanager">
                       {% csrf_token %}
                         <div class="form-group" style="width:40%">

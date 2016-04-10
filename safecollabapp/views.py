@@ -62,21 +62,29 @@ def add_manager(request):
         if not is_manager(request.user): # Check if they even have permission to add a new SM
             return redirect('/index/')
 
-        username = request.POST.get('username')
+        username = request.POST.get('username') # Get the username that they wish to add
+        context_dict = {
+            'response':''
+        }
+
+        if len(get_managers()) == 3:
+            context_dict['response'] = 'There are already 3 superusers -- you cannot add anymore!'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
         try:
             new_manager = User.objects.get(username=username)
         except:
-            return redirect('/index/')
+            context_dict['response'] = 'Could not find a user with that username'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
             
         if new_manager is not None: # User exists
             if is_manager(new_manager): # Already a manager
-                return redirect('/index/')
+                context_dict['response'] = 'That user is already a Site Manager!'
             else:
                 manager_group = Group.objects.get(name='site-manager')
                 new_manager.groups.add(manager_group)
-                return redirect('/index/')
-        else:
-            return redirect('/index/')
+                context_dict['response'] = 'Successfully added ' + username + ' as a Site Manager.'
+        
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
 
     else:
         return redirect('/index/')
