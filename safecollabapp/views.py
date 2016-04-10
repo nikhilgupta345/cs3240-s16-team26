@@ -50,7 +50,13 @@ def recover_password(request):
 
 # Returns whether a user is a site-manager or not
 def is_manager(user):
-    manager_group = Group.objects.get(name='site-manager')
+    try:
+        manager_group = Group.objects.get(name='site-manager')
+    except:
+        g = Group(name='site-manager')
+        g.save()
+        return False
+    
     return user in manager_group.user_set.all()
 
 # Returns a list of Users who are Site-Managers
