@@ -68,3 +68,7 @@ target/
 # Vim swap files
 *.swp
 .idea/
+
+# DB
+safecollab/db.sqlite3
+safecollabapp/migrations/

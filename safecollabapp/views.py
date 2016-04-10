@@ -129,3 +129,6 @@ def register(request):
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     else: # request method not POST
         return redirect('/', permanent=True)
+
+def messages(request):
+    return render(request, 'messages.html')
