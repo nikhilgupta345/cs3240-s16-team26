@@ -46,7 +46,6 @@ def login(request): # Home page and login screen
 
 def logout(request):
     auth_logout(request)
-
     return redirect('/', permanent=True) # Redirect to front page
 
 def register(request):
