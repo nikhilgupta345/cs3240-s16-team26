@@ -7,4 +7,3 @@ psycopg2==2.6.1
 pycrypto==2.6.1
 static3==0.6.1
 whitenoise==3.0
-PyQt4==4.11.4
