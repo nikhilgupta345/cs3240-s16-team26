@@ -4,7 +4,7 @@ from django.contrib.auth.models import User, Group
 # Container class for users and messages and other stuff a user needs
 class SafeCollabUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    public_key = models.BinaryField(editable = False)
+    public_key = models.BinaryField(editable = False, default=None)
 
 class PrivateMessage(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
