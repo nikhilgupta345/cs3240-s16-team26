@@ -7,8 +7,8 @@ class SafeCollabUser(models.Model):
     public_key = models.BinaryField(editable = False)
 
 class PrivateMessage(models.Model):
-    sender = models.ForeignKey(SafeCollabUser, on_delete=models.CASCADE, related_name='+')
-    recipient = models.ForeignKey(SafeCollabUser, on_delete=models.CASCADE, related_name='+')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
     encrypted = models.BooleanField(default = False)
     time = models.DateTimeField(auto_now_add = True) # timestamps upon message creation
     text = models.TextField() # actual text (plain or encrypted) of the message

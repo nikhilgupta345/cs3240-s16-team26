@@ -79,10 +79,52 @@
                       </ul>
                       <div class="tab-content">
                         <div id="viewmessages" class="tab-pane">
-                          VIEW MESSAGES
+                          <div class="container">
+                            {% for message in messages %}
+                            <div class="row">
+                              From: {{ message.sender.username }}
+                            </div>
+                            <div class="row">
+                              {{ message.time }}
+                            </div>
+                            <div class="row">
+                              {{ message.text }}
+                            </div>
+                            {% endfor %}
+                          </div>
                         </div>
                         <div id="sendmessages" class="tab-pane">
-                          SEND MESSAGES
+                          <div class="container" id="send-message-form-container">
+                            <form id="send-message-form" action="/sendmessage/" method="post" role="form">
+                              {% csrf_token %}
+                              <div class="row">
+                                <div class="form-group">
+                                  <div class="col-lg-8">
+                                    <label>Select User:</label>
+                                    <select name="recipient" class="form-control">
+                                      {% for user in users %}
+                                        <option value="{{ user.username }}">{{ user.username }}</option>
+                                      {% endfor %}
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="form-group">
+                                  <div class="col-lg-8">
+                                    <textarea rows="8" name="message" class="form-control"></textarea>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="form-group">
+                                  <div class="col-lg-2">
+                                    <input type="submit" value="Send" class="form-control" />
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
                         </div>
                       </div>
                     </div>

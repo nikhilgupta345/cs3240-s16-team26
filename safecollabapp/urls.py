@@ -10,5 +10,6 @@ urlpatterns = [
     url(r'^index/$', views.index, name='index'),
     url(r'^recover_password/$', views.recover_password, name='Recover Password'),
     url(r'^messages/$', views.messages, name='Private Messages'),
+    url(r'^sendmessage/$', views.send_message, name='Send Message'),
     url(r'^list/$', views.list, name='list'),
 ]

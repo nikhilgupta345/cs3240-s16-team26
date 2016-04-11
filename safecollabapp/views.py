@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
+from safecollabapp.models import PrivateMessage
 
 #---------------------------------
 # added for file upload example
@@ -50,8 +51,11 @@ def recover_password(request):
 
 # Returns whether a user is a site-manager or not
 def is_manager(user):
-    manager_group = Group.objects.get(name='site-manager')
-    return user in manager_group.user_set.all()
+    try:
+        manager_group = Group.objects.get(name='site-manager')
+        return user in manager_group.user_set.all()
+    except Group.DoesNotExist:
+        return False
 
 # Returns a list of Users who are Site-Managers
 def get_managers():
@@ -93,10 +97,11 @@ def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
 
-    # Is this user a manager, and the list of current site-managers
     context_dict = {
-        'is_manager': is_manager(request.user),
-        'site_managers_list' : get_managers(),
+        'is_manager': is_manager(request.user), # Is this user a manager?
+        'site_managers_list' : get_managers(), # the list of current site-managers
+        'users' : User.objects.all(), # List of all users, for use with messaging
+        'messages' : get_messages(request.user)
     }
 
     return render(request, 'index.html', context_dict)
@@ -215,4 +220,20 @@ def register(request):
         return redirect('/', permanent=True)
 
 def messages(request):
-    return render(request, 'messages.html')
+    return redirect('/index/')
+
+def send_message(request):
+    if request.method == 'POST':
+        sender = request.user
+        recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
+        message = request.POST.get('message')
+
+        new_msg = PrivateMessage(sender = sender, recipient = recipient, text = message)
+        new_msg.save()
+
+    return redirect('/index/')
+
+
+# gets all messages sent to a certain user
+def get_messages(user):
+    return PrivateMessage.objects.filter(recipient=user)
