@@ -53,9 +53,12 @@ def recover_password(request):
 def is_manager(user):
     try:
         manager_group = Group.objects.get(name='site-manager')
-        return user in manager_group.user_set.all()
-    except Group.DoesNotExist:
+    except:
+        g = Group(name='site-manager')
+        g.save()
         return False
+    
+    return user in manager_group.user_set.all()
 
 # Returns a list of Users who are Site-Managers
 def get_managers():
@@ -93,6 +96,56 @@ def add_manager(request):
     else:
         return redirect('/index/')
 
+def suspend_user(request):
+    if request.method == 'POST': # Check if they submitted a request to suspend a user
+        if not is_manager(request.user): # Check if they even have permission
+            return redirect('/index/')
+
+        username = request.POST.get('username') # Get the username that they wish to add
+        context_dict = {
+            'response':''
+        }
+
+        user = User.objects.get(username=username)
+
+        if not user.is_active:
+            context_dict['response'] = 'That user has already been suspended!'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+        else:
+            user.is_active = False
+            user.save()
+            context_dict['response'] = 'That user has been successfully suspended.'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+    else:
+        return redirect('/index/')
+
+def restore_user(request):
+    if request.method == 'POST': # Check if they submitted a request to suspend a user
+        if not is_manager(request.user): # Check if they even have permission
+            return redirect('/index/')
+
+        username = request.POST.get('username') # Get the username that they wish to add
+        context_dict = {
+            'response':''
+        }
+
+        user = User.objects.get(username=username)
+
+        if user.is_active:
+            context_dict['response'] = 'That user is already active!'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+        else:
+            user.is_active = True
+            user.save()
+            context_dict['response'] = 'That user has been successfully restored.'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+    else:
+        return redirect('/index/')
+
 def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
@@ -100,8 +153,8 @@ def index(request):
     context_dict = {
         'is_manager': is_manager(request.user), # Is this user a manager?
         'site_managers_list' : get_managers(), # the list of current site-managers
-        'users' : User.objects.all(), # List of all users, for use with messaging
-        'messages' : get_messages(request.user)
+        'users_list' : User.objects.all(),
+        'messages' : get_messages(request.user),
     }
 
     return render(request, 'index.html', context_dict)
@@ -121,6 +174,10 @@ def login(request): # Home page and login screen
 
         user = authenticate(username=username, password=password) # Check if this username/password combo exists
         if user is not None:
+            if not user.is_active:
+                context_dict['login_message'] = 'Your account has been suspended. Please contact a site-manager.'
+                return render(request, 'login.html', context_dict)
+
             auth_login(request, user) # Log the user in if they do
             if(remember != None):
                 request.session['username'] = username # Set a session so they're remembered next time
