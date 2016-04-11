@@ -40,6 +40,7 @@
                         <li><a href="#create-reports" data-toggle="tab">Create a Report</a></li>
                         {% if is_manager %}
                         <li><a href="#assign-manager" data-toggle="tab">Assign A Site-Manager</a></li>
+                        <li><a href="#manage-users" data-toggle="tab">Suspend/Restore Accounts</a></li>
                         {% endif %}
                     </ul>
                   </span>
@@ -70,6 +71,17 @@
                           Add another: <input type="text" name="username" id="username" tabindex="1" class="form-control" placeholder="Username" value="">
                         </div>
                       </form>
+                    </div>
+                    <div id="manage-users" class="tab-pane fade">
+                      <div id="manageusers-response"></div><br />
+                      Current Users: <br/>
+                      <div id="user-list">
+                        <ul>
+                          {% for user in users_list %}
+                          <li> {{ user.username }} <a href="#" class="link-suspend" id="{{ user.username }}"> Suspend </a> <a href="#" class="link-restore" id="{{ user.username }}"> Restore </a></li>
+                          {% endfor %}
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>

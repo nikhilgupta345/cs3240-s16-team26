@@ -1,5 +1,6 @@
 $(document).ready(function() {
 
+  /* Add a Site Manager */
   $('#form-addmanager').on('submit', function(event) {
     event.preventDefault();
 
@@ -32,6 +33,70 @@ $(document).ready(function() {
         console.log('error');
       }
     })
+  })
+
+  /* Suspend a User Account */
+  $('a.link-suspend').click(function() {
+    console.log($(this).attr('id'))
+
+    data_dict = {
+      'username': $(this).attr('id')
+    }
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    $.ajax({
+      url: "/suspend_user/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        $('#manageusers-response').text(json['response']); // Username
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+    return false;
+  })
+
+  /* Restore a User Account */
+  $('a.link-restore').click(function() {
+    data_dict = {
+      'username': $(this).attr('id') // Get the username
+    }
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    $.ajax({
+      url: "/restore_user/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        $('#manageusers-response').text(json['response']);
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+    return false;
   })
 })
 
