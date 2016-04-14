@@ -59,9 +59,6 @@ $(document).ready(function() {
       data: data_dict,
 
       success: function(json) {
-        console.log('success');
-        console.log(json);
-
         $('#register-message').text(json['register_message']);
         if(json['response'] == 'redirect_index') {
           location.href = '/index/';

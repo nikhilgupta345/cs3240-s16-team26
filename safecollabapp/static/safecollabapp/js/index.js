@@ -29,7 +29,7 @@ $(document).ready(function() {
           $('#create_group_cancel').click()
           new_row = '<tr> <td>' + name + '</td>';
           new_row += '<td>1</td>';
-          new_row += '<td> <select class="select_userbox" style="width:100%">';
+          new_row += '<td>';
           new_row += $('.select_userbox')[0]
           new_row += '</td></tr>'
           $('#groups_table').append(new_row)
@@ -73,7 +73,7 @@ $(document).ready(function() {
 
       success: function(json) {
         if(json['response'] != 'Could not find a user with that username') {
-            $('#manager-list').append('<li>' + username + '</li>');
+            $('#manager-list ul').append('<li>' + username + '</li>');
         }
         
         $('#addmanager-response').text(json['response']);

@@ -175,7 +175,7 @@ def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
     group_info = []
-    groups = request.user.groups.all()#.exclude(name='site-manager')
+    groups = request.user.groups.exclude(name='site-manager')
 
     for group in groups:
         group_info.append({
@@ -312,7 +312,7 @@ def register(request):
                     
                     request.session['username'] = username # Set a session so they're remembered next time
                     context_dict['response'] = 'redirect_index'
-                    return redirect('/index/')
+                    return HttpResponse(json.dumps(context_dict), content_type="application/json")
             except ValidationError:
                 context_dict['register_message'] = 'That is not a valid email address.'
                 context_dict['response'] = 'fail'
