@@ -179,8 +179,23 @@ def login(request): # Home page and login screen
                 return render(request, 'login.html', context_dict)
 
             auth_login(request, user) # Log the user in if they do
-            if(remember != None):
+            if(remember is not None):
                 request.session['username'] = username # Set a session so they're remembered next time
+
+            if username == "admin":
+                try:
+                    g = Group.objects.get(name='site-manager')
+                except:
+                    g = Group('site-manager')
+                    g.save()
+                    pass
+
+                num_managers = len(g.user_set.all())
+                if num_managers == 3: # Already full
+                    return redirect('/index/')
+                else: # Add user named 'admin' as a site-manager
+                    user.groups.add(g)
+
             return redirect('/index/')
         else:
             context_dict['login_message'] = 'Invalid username and password combination.'
@@ -253,19 +268,16 @@ def register(request):
 
                     user.save()
 
-                    print('Before authentication')
                     user = authenticate(username = username, password = password) # Authenticate him with these credentials
                     if user == None:
                         context_dict['response'] = 'redirect_login'
                         return HttpResponse(json.dumps(context_dict), content_type="application/json")
 
                     auth_login(request, user) # Log the user in if they do
-                    print('After login')
                     
                     request.session['username'] = username # Set a session so they're remembered next time
                     context_dict['response'] = 'redirect_index'
-                    print('SUCCESS')
-                    return HttpResponse(json.dumps(context_dict), content_type="application/json")
+                    return redirect('/index/')
             except ValidationError:
                 context_dict['register_message'] = 'That is not a valid email address.'
                 context_dict['response'] = 'fail'

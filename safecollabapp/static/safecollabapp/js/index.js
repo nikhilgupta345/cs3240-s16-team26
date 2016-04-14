@@ -25,8 +25,12 @@ $(document).ready(function() {
       data: data_dict,
 
       success: function(json) {
+        if(json['response'] != 'Could not find a user with that username') {
+            $('#manager-list').append('<li>' + username + '</li>');
+        }
+        
         $('#addmanager-response').text(json['response']);
-        $('#manager-list').append('<li>' + username + '</li>');
+
       },
 
       error: function(xhr, errmsg, err) {
