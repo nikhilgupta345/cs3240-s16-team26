@@ -142,7 +142,7 @@
                       </form>
                     </div>
                     <div id="messages" class="tab-pane fade">
-                      <ul class="nav nav-pills">
+                      <ul class="nav nav-tabs">
                         <li class="active"><a href="#viewmessages" data-toggle="tab">View Messages</a></li>
                         <li><a href="#sendmessages" data-toggle="tab">Send Messages</a></li>
                       </ul>
@@ -164,6 +164,7 @@
                         </div>
                         <div id="sendmessages" class="tab-pane">
                           <div class="container" id="send-message-form-container">
+                            <br/>
                             <form id="send-message-form" action="/sendmessage/" method="post" role="form">
                               {% csrf_token %}
                               <div class="row">

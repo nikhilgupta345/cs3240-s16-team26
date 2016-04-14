@@ -19,7 +19,6 @@ $(document).ready(function() {
 
   $('#register-form').on('submit', function(event) {
     event.preventDefault();
-    console.log('form submitted');
 
     first_name = $('#first-name').val()
     last_name = $('#last-name').val()
@@ -36,13 +35,6 @@ $(document).ready(function() {
       'password': password,
       'confirm-password': confirm_password
     }
-
-    console.log("First name " + first_name)
-    console.log("Last name " + last_name)
-    console.log("Email " + email)
-    console.log("Username " + username)
-    console.log("Password " + password)
-    console.log("Confirm " + confirm_password)
 
     csrftoken = getCookie('csrftoken');
     $.ajaxSetup({

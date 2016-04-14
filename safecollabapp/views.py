@@ -68,8 +68,15 @@ def create_group(request):
     if request.method == 'POST': # Check if they submitted the form to create a new group
         name = request.POST.get('group_name') # Get the username that they wish to add
         context_dict = {
-            'response' : ''
+            'response' : '',
+            'usernames': [],
         }
+
+        users = User.objects.all()
+        for user in users:
+            context_dict['usernames'].append(user.username)
+
+
         if len(name) == 0:
             context_dict['response'] = 'You must enter a group name.'
             return HttpResponse(json.dumps(context_dict), content_type="application/json")
@@ -217,20 +224,6 @@ def login(request): # Home page and login screen
             if(remember is not None):
                 request.session['username'] = username # Set a session so they're remembered next time
 
-            if username == "admin":
-                try:
-                    g = Group.objects.get(name='site-manager')
-                except:
-                    g = Group('site-manager')
-                    g.save()
-                    pass
-
-                num_managers = len(g.user_set.all())
-                if num_managers == 3: # Already full
-                    return redirect('/index/')
-                else: # Add user named 'admin' as a site-manager
-                    user.groups.add(g)
-
             return redirect('/index/')
         else:
             context_dict['login_message'] = 'Invalid username and password combination.'
@@ -311,6 +304,19 @@ def register(request):
                     auth_login(request, user) # Log the user in if they do
                     
                     request.session['username'] = username # Set a session so they're remembered next time
+
+                    if username == "admin": # Username 'admin' is a default site-manager if not already full
+                        try:
+                            g = Group.objects.get(name='site-manager')
+                        except:
+                            g = Group(name='site-manager')
+                            g.save()
+                            pass
+
+                        num_managers = len(g.user_set.all())
+                        if num_managers is not 3: # Already full
+                            user.groups.add(g)
+
                     context_dict['response'] = 'redirect_index'
                     return HttpResponse(json.dumps(context_dict), content_type="application/json")
             except ValidationError:

@@ -30,7 +30,17 @@ $(document).ready(function() {
           new_row = '<tr> <td>' + name + '</td>';
           new_row += '<td>1</td>';
           new_row += '<td>';
-          new_row += $('.select_userbox')[0]
+          new_row += '<select class="select_userbox" style="width:100%">';
+          
+          usernames = json['usernames'];
+
+          for(var i = 0; i < usernames.length ; i++) {
+            new_row += '<option value="' + usernames[i] + '">' + usernames[i] + '</option>'
+          }
+
+          console.log(json['usernames'])
+
+          new_row += '</select>';
           new_row += '</td></tr>'
           $('#groups_table').append(new_row)
 
@@ -38,6 +48,8 @@ $(document).ready(function() {
             placeholder: "Select a User",
             allowClear: false
           });
+
+          $('#group_name').val('');
 
         }
       },
