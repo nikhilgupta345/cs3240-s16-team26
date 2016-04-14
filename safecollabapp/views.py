@@ -64,6 +64,31 @@ def is_manager(user):
 def get_managers():
     return User.objects.filter(groups__name='site-manager')
 
+def create_group(request):
+    if request.method == 'POST': # Check if they submitted the form to create a new group
+        name = request.POST.get('group_name') # Get the username that they wish to add
+        context_dict = {
+            'response' : ''
+        }
+        if len(name) == 0:
+            context_dict['response'] = 'You must enter a group name.'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+        try:
+            g = Group.objects.get(name=name)
+
+            context_dict['response'] = 'There is already a group on the site with that name!'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+        except:                
+            g = Group(name=name)
+            g.save()    
+            request.user.groups.add(g)
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+    else:
+        return redirect('/index/')
+
 def add_manager(request):
     if request.method == 'POST': # Check if they submitted the form to add an SM
         if not is_manager(request.user): # Check if they even have permission to add a new SM
@@ -149,12 +174,22 @@ def restore_user(request):
 def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
+    group_info = []
+    groups = request.user.groups.all()#.exclude(name='site-manager')
+
+    for group in groups:
+        group_info.append({
+            'group':group, 
+            'num_users':len(group.user_set.all())
+        })
+
 
     context_dict = {
         'is_manager': is_manager(request.user), # Is this user a manager?
         'site_managers_list' : get_managers(), # the list of current site-managers
         'users_list' : User.objects.all(),
         'messages' : get_messages(request.user),
+        'groups' : group_info,
     }
 
     return render(request, 'index.html', context_dict)

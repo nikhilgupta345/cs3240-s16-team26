@@ -1,5 +1,53 @@
 $(document).ready(function() {
 
+  /* Add a new group */
+  $('#create_group_button').click(function(event) {
+    event.preventDefault();
+    name = $('#group_name').val()
+
+    data_dict = {
+      'group_name': name
+    }
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/create_group/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        if(json['response'] != '') {
+          $('#create_group_response').text(json['response']);
+        } else {
+          $('#create_group_cancel').click()
+          new_row = '<tr> <td>' + name + '</td>';
+          new_row += '<td>1</td>';
+          new_row += '<td> <select class="select_userbox" style="width:100%">';
+          new_row += $('.select_userbox')[0]
+          new_row += '</td></tr>'
+          $('#groups_table').append(new_row)
+
+          $('.select_userbox').select2({
+            placeholder: "Select a User",
+            allowClear: false
+          });
+
+        }
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+  })
+
   /* Add a Site Manager */
   $('#form-addmanager').on('submit', function(event) {
     event.preventDefault();
@@ -18,7 +66,6 @@ $(document).ready(function() {
             }
         }
     });
-
     $.ajax({
       url: "/add_manager/",
       type: "POST",

@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^add_manager/$', views.add_manager, name='Add Manager'),
     url(r'^suspend_user/$', views.suspend_user, name='Suspend a User'),
     url(r'^restore_user/$', views.restore_user, name='Restore a User'),
+    url(r'^create_group/$', views.create_group, name='Create a Group'),
     url(r'^index/$', views.index, name='index'),
     url(r'^recover_password/$', views.recover_password, name='Recover Password'),
     url(r'^messages/$', views.messages, name='Private Messages'),
