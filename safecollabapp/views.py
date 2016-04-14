@@ -66,7 +66,7 @@ def get_managers():
 
 def create_group(request):
     if request.method == 'POST': # Check if they submitted the form to create a new group
-        name = request.POST.get('group_name') # Get the username that they wish to add
+        name = request.POST.get('group_name') # Get the group name that they wish to add
         context_dict = {
             'response' : '',
             'usernames': [],

@@ -30,8 +30,9 @@ $(document).ready(function() {
           new_row = '<tr> <td>' + name + '</td>';
           new_row += '<td>1</td>';
           new_row += '<td>';
-          new_row += '<select class="select_userbox" style="width:100%">';
+          new_row += '<select class="select_userbox" style="width:100%" id="' + name + '">';
           
+          console.log(json);
           usernames = json['usernames'];
 
           for(var i = 0; i < usernames.length ; i++) {
@@ -50,7 +51,7 @@ $(document).ready(function() {
           });
 
           $('#group_name').val('');
-
+          $('#create_group_response').text('');
         }
       },
 
@@ -161,6 +162,12 @@ $(document).ready(function() {
     })
     return false;
   })
+
+  $("#group_name").keyup(function(event){
+    if(event.keyCode == 13){
+      $("#create_group_button").click();
+    }
+  });
 })
 
 
