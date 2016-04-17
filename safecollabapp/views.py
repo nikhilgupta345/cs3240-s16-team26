@@ -64,6 +64,30 @@ def is_manager(user):
 def get_managers():
     return User.objects.filter(groups__name='site-manager')
 
+def add_user_to_group(request):
+    if request.method == "POST":
+        context_dict = {
+            'response': ''
+        }
+
+        group_name = request.POST.get('group_name')
+        username = request.POST.get('username')
+
+        g = Group.objects.get(name=group_name)
+        try:
+            print(username)
+            user = User.objects.get(username=username)
+            if user in g.user_set.all():
+                context_dict['response'] = 'User already in group!'
+            else:
+                user.groups.add(g)
+        except:
+            context_dict['response'] = 'Invalid User!'
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    else:
+        return redirect('/index/')
+
 def create_group(request):
     if request.method == 'POST': # Check if they submitted the form to create a new group
         name = request.POST.get('group_name') # Get the group name that they wish to add
