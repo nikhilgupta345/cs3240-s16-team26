@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
-from safecollabapp.models import PrivateMessage
+from safecollabapp.models import PrivateMessage, Folder, Report
 
 #---------------------------------
 # added for file upload example
@@ -219,7 +219,8 @@ def index(request):
         'is_manager': is_manager(request.user), # Is this user a manager?
         'site_managers_list' : get_managers(), # the list of current site-managers
         'users_list' : User.objects.all(),
-        'messages' : get_messages(request.user),
+        'messages_list' : get_messages(request.user),
+        'reports_list' : get_reports(request.user),
         'groups' : group_info,
     }
 
@@ -370,3 +371,30 @@ def send_message(request):
 # gets all messages sent to a certain user
 def get_messages(user):
     return PrivateMessage.objects.filter(recipient=user)
+
+def create_report(request):
+    if request.method == 'POST':
+        # get all values from request
+        owner = request.user
+        short_desc = request.POST.get('short_desc')
+        long_desc = request.POST.get('long_desc')
+        private = request.POST.get('private') is not None # is the box checked?
+
+        new_report = Report(owner = owner, short_desc = short_desc, long_desc = long_desc, private = private)
+        new_report.save()
+
+    return redirect('/index/')
+
+def get_reports(user):
+    return Report.objects.filter(owner=user)
+
+def view_report(request):
+    if request.method == 'POST':
+        context_dict = {'short_desc' : ''}
+        report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
+        context_dict['short_desc'] = report.short_desc
+        context_dict['long_desc'] = report.long_desc
+        context_dict['time'] = report.time.isoformat()
+        context_dict['owner'] = report.owner.username
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')

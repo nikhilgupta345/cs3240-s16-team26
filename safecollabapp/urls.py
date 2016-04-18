@@ -16,4 +16,6 @@ urlpatterns = [
     url(r'^messages/$', views.messages, name='Private Messages'),
     url(r'^sendmessage/$', views.send_message, name='Send Message'),
     url(r'^list/$', views.list, name='list'),
+    url(r'^create_report/$', views.create_report, name='Create Report'),
+    url(r'^view_report/$', views.view_report, name='View Report'),
 ]

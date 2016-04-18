@@ -61,19 +61,44 @@
                   </span>
                 </div>
                 <div class="col-md-9" style="height:100%">
-                  <div class="tab-content" style="height:100%; overflow:scroll">
+                  <div class="tab-content" style="height:100%; overflow:auto">
                     <div id="view-reports" class="tab-pane fade in active">
-                      <h3>A</h3>
-                      <p>Some content.</p>
+                      <div class="container" style="height:100%; width:100%">
+                        <div class="row">
+                          <div class="col-sm-12">
+                            <h3>Reports</h3>
+                          </div>
+                        </div>
+                        <div class="row" style="height:100%; width:100%">
+                          <div class="col-sm-4">
+                            <div class="list-group">
+                              {% for report in reports_list %}
+                                <form action="/view_report/" class="view-report-form" method="POST">
+                                  {% csrf_token %}
+                                  <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}"/>{{report.short_desc}}
+                                {% if report.private %}
+                                  <span class="label label-default label-pill pull-sm-right">Private</span>
+                                {% endif %}
+                                </button>
+                                </form>
+                              {% endfor %}
+                            </div>
+                          </div>
+                          <div class="col-sm-8">
+                            <div id="viewreport-response"></div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div id="create-reports" class="tab-pane fade">
                       <h3>Create a Report</h3>
                       <form action="/create_report/" method="POST" id="form-createreport">
                       {% csrf_token %}
                       <div class="form-group">
-                        <label for="short_desc">Name:</label><input type="text" name="short_desc" id="short_desc" class="form-control" />
+                        <label for="short_desc">Name:</label><input type="text" name="short_desc" id="short_desc" maxlength="120" class="form-control" />
                         <label for="long_desc">Description:</label><textarea name="long_desc" rows="8" id="long_desc" class="form-control"></textarea>
                         <label for="private">Mark as private:</label><input type="checkbox" name="private" id="private" />
+                        <input type="submit" value="Create Report" class="form-control" />
                       </div>
                       </form>
                     </div>
@@ -162,7 +187,7 @@
                       <div class="tab-content">
                         <div id="viewmessages" class="tab-pane">
                           <div class="container">
-                            {% for message in messages %}
+                            {% for message in messages_list %}
                             <div class="row">
                               From: {{ message.sender.username }}
                             </div>
