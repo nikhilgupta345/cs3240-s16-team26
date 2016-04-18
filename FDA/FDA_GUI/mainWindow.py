@@ -4,6 +4,11 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot,SIGNAL,SLOT
 import psycopg2
 import csv
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES
+from Crypto import Random
+from Crypto.Hash import SHA256
+
 
 PG_USER = "postgres"
 PG_USER_PASS = "liamjd"
@@ -97,11 +102,10 @@ class LoginWindow(QtGui.QWidget):
 
 class FileItem(QtGui.QListWidgetItem):
 
-    def __init__(self, filename):
+    def __init__(self, filename, key):
         QtGui.QListWidgetItem.__init__(self, filename)
-        self.fullFile = filename
-        i = str(self.fullFile).rindex("/")
-        self.trncFileName = self.fullFile[i+1:]
+        self.filename = filename
+        self.key = key
 
 
 class FileList(QtGui.QListWidget):
@@ -126,12 +130,73 @@ class FileList(QtGui.QListWidget):
     def addFiles(self, files):
         i = 0
         while i < files.count():
-            item = QtGui.QListWidgetItem()
-            item.setText(files.item(i).text())
+            item = FileItem('', '')
+            file = files.item(i)
+            encrypted = self.encrypt_file(file.filename, file.key[0])
+            item.filename = (str(encrypted)[26:len(str(encrypted)) - 2])
+            item.setText(item.filename)
+            item.key = file.key
             item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
             item.setCheckState(QtCore.Qt.Unchecked)
             self.addItem(item)
             i += 1
+
+    def encrypt_file(self, file_name, symm_key):
+        hash_key = SHA256.new(symm_key)
+        hash_key.digest()
+        key_size16 = hash_key.digest()[0:16]
+        try:
+            fout = open(file_name + '.enc', 'wb')
+
+            text = ''
+            with open(file_name, 'rb') as f:
+                text = f.read()
+
+
+            enc = AES.new(key_size16, AES.MODE_CFB, b'abcdefghijklmnop')
+            final_string = enc.encrypt(text)
+
+            fout.write(final_string)
+
+            fout.close()
+
+            return fout
+        except IOError as ex:
+            print("IO Error. File not valid.")
+            return False
+        except ValueError as ex:
+            print(ex)
+            print("Invalid key.")
+            return False
+
+    def decrypt_file(self, file_name, symm_key):
+        hash_key = SHA256.new(symm_key)
+        hash_key.digest()
+        key_size16 = hash_key.digest()[0:16]
+        totaltext = ''
+        try:
+            with open(file_name, 'rb') as f:
+                totaltext = f.read()
+
+            dec = AES.new(key_size16, AES.MODE_CFB, b'abcdefghijklmnop')
+            plaintext = dec.decrypt(totaltext)
+
+            #print(plaintext)
+
+            print(file_name)
+            index = file_name.rindex("/")
+            newfile = file_name[:index+1] + "DEC_" + file_name[index+1:-4]
+            fout = open(newfile, 'wb')
+            fout.write(plaintext)
+            fout.close()
+            return fout
+        except FileNotFoundError as ex:
+            print(ex)
+            print("File not found.")
+        except UnicodeDecodeError as ex:
+            print("Unicode Decode Error.")
+        except ValueError as ex:
+            print("Invalid Key Provided.")
 
     def decrypt_files(self, files):
         #Add decryption algorithm
@@ -146,10 +211,10 @@ class FileList(QtGui.QListWidget):
                     break
                 j += 1
             if item.checkState() == QtCore.Qt.Checked and not same:
-                self.addItem(item.text())
+                decrypted = self.decrypt_file(item.text(), item.key[0])
+                self.addItem(str(decrypted)[26:len(str(decrypted))-2])
             i += 1
 
-    #Get Drag and Drop working
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
             event.accept()
@@ -227,12 +292,12 @@ class Window(QtGui.QMainWindow):
         decBtn.move(450, 275)
         decBtn.clicked.connect(self.decrypt_all_files)
 
-        uplAllBtn = QtGui.QPushButton("Upload Files to Safecollab", self)
+        uplAllBtn = QtGui.QPushButton("Download Enc Files", self)
         uplAllBtn.resize(uplAllBtn.sizeHint())
-        uplAllBtn.move(90, 515)
-        uplAllBtn.clicked.connect(self.upload_files_to_Heroku)
+        uplAllBtn.move(100, 515)
+        uplAllBtn.clicked.connect(self.download_files)
 
-        dlBtn = QtGui.QPushButton("Download Files", self)
+        dlBtn = QtGui.QPushButton("Download Dec Files", self)
         dlBtn.resize(dlBtn.sizeHint())
         dlBtn.move(780, 515)
         dlBtn.clicked.connect(self.download_files)
@@ -275,13 +340,38 @@ class Window(QtGui.QMainWindow):
         self.files.move(1400, 217)
         self.files.show()
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Load File', '')
-        self.files.encFiles.addFile(filename)
-        self.files.addFilesBtn.clicked.connect(self.encrypt_Files)
+        if filename:
+            random_generator = Random.new().read
+            key = RSA.generate(1024, random_generator)
+            public = key.publickey()
+            self.keyIn = KeyInput()
+            self.keyIn.show()
+            self.keyIn.key.returnPressed.connect(lambda: self.files.create_enc_object(filename, self.secret_string(self.keyIn.key.text(), public), self.keyIn))
+        #self.files.encFiles.addFile(filename)
+        self.files.addFilesBtn.clicked.connect(self.encrypt_All_Files)
 
     def open_file(self):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Load File', '')
 
-    def encrypt_Files(self):
+    def secret_string(self, string, public_key):
+        """encoded_string = public_key.encrypt(str.encode(string), 32)
+        return encoded_string"""
+        b = bytes(string, 'utf-8')
+        enc_data = public_key.encrypt(b, None)
+        return enc_data
+
+    def encrypt_All_Files(self):
+        #Add encryption algorithm using key field of fileItem object
+        """i = 0
+        while i < self.files.encFiles.count():
+            file = self.files.encFiles.item(i)
+            print(file.filename)
+            print(file.key[0])
+            print(sys.getsizeof(file.key[0]))
+            encrypted = QtGui.QListWidgetItem()
+            encrypted = self.encrypt_file(file.filename, file.key[0])
+            self.reportList.addItem(str(encrypted)[26:len(str(encrypted)) - 2])
+            i += 1"""
         self.reportList.addFiles(self.files.encFiles)
         self.files.close()
         self.show()
@@ -289,6 +379,19 @@ class Window(QtGui.QMainWindow):
     #To do
     def decrypt_all_files(self):
         self.decList.decrypt_files(self.reportList)
+
+
+class KeyInput(QtGui.QWidget):
+
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.resize(300, 200)
+        self.key = QtGui.QLineEdit(self)
+        self.key.resize(150, 22)
+        self.key.move(80, 100)
+        self.label = QtGui.QLabel("Please enter the public key.", self)
+        self.label.resize(self.label.sizeHint())
+        self.label.move(78, 75)
 
 
 class AddFileDialog(QtGui.QWidget):
@@ -323,13 +426,23 @@ class AddFileDialog(QtGui.QWidget):
 
     def upload_files(self):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Load File', '')
-        self.encFiles.addItem(filename)
+        if filename:
+            self.keyIn = KeyInput()
+            self.keyIn.show()
+            self.keyIn.key.returnPressed.connect(lambda: self.create_enc_object(filename, self.keyIn.key.text(), self.keyIn))
+
+    def create_enc_object(self, filename, key, keyIn):
+        fileIt = FileItem(filename, key)
+        keyIn.close()
+        self.encFiles.addItem(fileIt)
 
 if __name__ == "__main__":
     load_user_database("users.csv")
     app = QtGui.QApplication(sys.argv)
-    #w = Window()
-    #w.show()
-    lg = LoginWindow()
-    lg.show()
+    w = Window()
+    w.show()
+    #lg = LoginWindow()
+    #lg.show()
+    #k = KeyInput()
+    #k.show()
     sys.exit(app.exec_())
