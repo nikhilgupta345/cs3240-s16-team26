@@ -67,8 +67,15 @@
                       <p>Some content.</p>
                     </div>
                     <div id="create-reports" class="tab-pane fade">
-                      <h3>B</h3>
-                      <p>Some content in menu 1.</p>
+                      <h3>Create a Report</h3>
+                      <form action="/create_report/" method="POST" id="form-createreport">
+                      {% csrf_token %}
+                      <div class="form-group">
+                        <label for="short_desc">Name:</label><input type="text" name="short_desc" id="short_desc" class="form-control" />
+                        <label for="long_desc">Description:</label><textarea name="long_desc" rows="8" id="long_desc" class="form-control"></textarea>
+                        <label for="private">Mark as private:</label><input type="checkbox" name="private" id="private" />
+                      </div>
+                      </form>
                     </div>
                     <div id="manage-groups" class="tab-pane fade">
                       <table class="table table-hover" id="groups_table">

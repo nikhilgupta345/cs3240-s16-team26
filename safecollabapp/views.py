@@ -367,7 +367,6 @@ def send_message(request):
 
     return redirect('/index/')
 
-
 # gets all messages sent to a certain user
 def get_messages(user):
     return PrivateMessage.objects.filter(recipient=user)
