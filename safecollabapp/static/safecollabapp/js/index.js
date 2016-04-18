@@ -47,6 +47,69 @@ $(document).ready(function() {
     })
   })
 
+   /* Add a new group */
+  $('#sitemanager_create_group_button').click(function(event) {
+    event.preventDefault();
+    name = $('#group_name').val()
+
+    data_dict = {
+      'group_name': name
+    }
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/sitemanager_create_group/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        if(json['response'] != '') {
+          $('#sitemanager_create_group_response').text(json['response']);
+        } else {
+          $('#sitemanager_create_group_cancel').click()
+          new_row = '<tr> <td>' + name + '</td>';
+          new_row += '<td class="td_num_users" id="td_num_users_' + name + '">1</td>';
+          new_row += '<td>';
+          new_row += '<select class="select_userbox" style="width:100%" id="select_' + name + '">';
+          
+          console.log(json);
+          usernames = json['usernames'];
+
+          new_row += '<option />';
+          for(var i = 0; i < usernames.length ; i++) {
+            new_row += '<option value="' + usernames[i] + '">' + usernames[i] + '</option>'
+          }
+
+          console.log(json['usernames'])
+
+          new_row += '</select>';
+          new_row += '</td><td><button type="submit" class="btn btn-primary add_user_to_group_button" id="add_button_' + name + '">' + 'Add User</button></td>'
+          new_row += '</tr>'
+          $('#groups_table').append(new_row)
+
+          $('.select_userbox').select2({
+            placeholder: "Select a User",
+            allowClear: false
+          });
+
+          $('#group_name').val('');
+          $('#sitemanager_create_group_response').text('');
+        }
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+  })
+
   /* Add a new group */
   $('#create_group_button').click(function(event) {
     event.preventDefault();
