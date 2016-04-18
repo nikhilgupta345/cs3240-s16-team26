@@ -54,8 +54,7 @@
                         <li><a href="#manage-groups" data-toggle="tab">Manage Groups</a></li>
                         <li><a href="#messages" data-toggle="tab">Messages</a></li>
                         {% if is_manager %}
-                        <li><a href="#assign-manager" data-toggle="tab">Assign A Site-Manager</a></li>
-                        <li><a href="#manage-users" data-toggle="tab">Suspend/Restore Accounts</a></li>
+                        <li><a href="#site-manager" data-toggle="tab">Site Manager</a></li>
                         {% endif %}
                     </ul>
                   </span>
@@ -162,23 +161,7 @@
                         </div>
                       </div>
                     </div>
-                    <div id="assign-manager" class="tab-pane fade">
-                      <div id="addmanager-response"></div><br />
-                      Current Site-Managers: <br/>
-                      <div id="manager-list">
-                        <ul>
-                          {% for user in site_managers_list %}
-                          <li> {{ user.username }} </li>
-                          {% endfor %}
-                        </ul>
-                      </div>
-                      <form action="/add_manager/" method="POST" id="form-addmanager">
-                      {% csrf_token %}
-                        <div class="form-group" style="width:40%">
-                          Add another: <input type="text" name="username" id="username" tabindex="1" class="form-control" placeholder="Username" value="">
-                        </div>
-                      </form>
-                    </div>
+
                     <div id="messages" class="tab-pane fade">
                       <ul class="nav nav-tabs">
                         <li class="active"><a href="#viewmessages" data-toggle="tab">View Messages</a></li>
@@ -236,15 +219,40 @@
                         </div>
                       </div>
                     </div>
-                    <div id="manage-users" class="tab-pane fade">
-                      <div id="manageusers-response"></div><br />
-                      Current Users: <br/>
-                      <div id="user-list">
-                        <ul>
-                          {% for user in users_list %}
-                          <li> {{ user.username }} <a href="#" class="link-suspend" id="{{ user.username }}"> Suspend </a> <a href="#" class="link-restore" id="{{ user.username }}"> Restore </a></li>
-                          {% endfor %}
-                        </ul>
+                    <div id="site-manager" class="tab-pane fade">
+                      <ul class="nav nav-tabs">
+                        <li class="active"><a href="#assign-manager" data-toggle="tab">Assign Managers</a></li>
+                        <li><a href="#manage-users" data-toggle="tab">Manage Users</a></li>
+                      </ul>
+                      <div class="tab-content">
+                        <div id="assign-manager" class="tab-pane fade">
+                          <div id="addmanager-response"></div><br />
+                          Current Site-Managers: <br/>
+                          <div id="manager-list">
+                            <ul>
+                              {% for user in site_managers_list %}
+                              <li> {{ user.username }} </li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                          <form action="/add_manager/" method="POST" id="form-addmanager">
+                          {% csrf_token %}
+                            <div class="form-group" style="width:40%">
+                              Add another: <input type="text" name="username" id="username" tabindex="1" class="form-control" placeholder="Username" value="">
+                            </div>
+                          </form>
+                        </div>
+                        <div id="manage-users" class="tab-pane fade">
+                          <div id="manageusers-response"></div><br />
+                          Current Users: <br/>
+                          <div id="user-list">
+                            <ul>
+                              {% for user in users_list %}
+                              <li> {{ user.username }} <a href="#" class="link-suspend" id="{{ user.username }}"> Suspend </a> <a href="#" class="link-restore" id="{{ user.username }}"> Restore </a></li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

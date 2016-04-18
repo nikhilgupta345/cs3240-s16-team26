@@ -36,7 +36,7 @@ $(document).ready(function() {
           $.notify('User successfully added!', "success");
           var td_num_users = $('#td_num_users_' + group_name)[0];
           var cur_users = parseInt(td_num_users.innerHTML);
-          td_num_users.innerHTML = cur_users + 1
+          td_num_users.innerHTML = cur_users + 1 // Change num_users in the table by 1
         }
       },
 
