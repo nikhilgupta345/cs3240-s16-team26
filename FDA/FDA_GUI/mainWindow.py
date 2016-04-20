@@ -8,65 +8,39 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random
 from Crypto.Hash import SHA256
+import msvcrt as m
+import time
 
 
 PG_USER = "postgres"
 PG_USER_PASS = "liamjd"
 PG_HOST_INFO = ""
 PG_DATABASE = "testdb"
-reports = []
-
-def load_user_database(csv_filename):
-    conn = psycopg2.connect("dbname=" + PG_DATABASE + " user=" + PG_USER + " password=" + PG_USER_PASS + PG_HOST_INFO)
-    cur = conn.cursor()
-    with open(csv_filename, 'rU') as csvfile:
-        filtered = (line.replace('\n', '') for line in csvfile)
-        reader = csv.reader(csvfile)
-        for row in csv.reader(filtered):
-            #l_info = tuple(item for item in row.split(',') if item.strip())
-            l_info = tuple(row)
-            query = """INSERT INTO logininfo VALUES %s returning *"""
-            cur.execute(query, (l_info,))
-            conn.commit()
 
 def authenticate_login(username, password):
     conn = psycopg2.connect("dbname=" + PG_DATABASE  + " user=" + PG_USER + " password=" + PG_USER_PASS + PG_HOST_INFO)
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM logininfo')
+    cur1 = conn.cursor()
+    cur2 = conn.cursor()
+    cur1.execute('SELECT username FROM auth_user')
+    cur2.execute('SELECT password FROM auth_user')
     usr = False
     pas = False
-    for login in cur.fetchall():
-        if login[0] == username:
+    for user in cur1.fetchall():
+        if user == username:
             usr = True
-        if login[1] == password:
+    for passw in cur2.fetchall():
+        if passw == password:
             pas = True
     if usr and pas:
         return True
     else:
         return False
 
-
 class LoginWindow(QtGui.QWidget):
 
     def __init__(self):
         super(LoginWindow, self).__init__()
         self.resize(600, 400)
-        """layout = QtGui.QVBoxLayout()
-        layout2 = QtGui.QVBoxLayout()
-        layout.addStretch(0.5)
-        usr = QtGui.QLabel("Username")
-        passw = QtGui.QLabel("Password")
-        self.userName = QtGui.QLineEdit(self)
-        self.password = QtGui.QLineEdit(self)
-        self.loginBtn = QtGui.QPushButton("Login", self)
-        self.usr = QtGui.QLabel("Username")
-        self.pas = QtGui.QLabel("Password")
-        #self.loginBtn.setSizePolicy(25, 100)
-        layout.addWidget(self.userName)
-        layout.addWidget(self.password)
-        layout.addWidget(self.loginBtn)
-        layout.setSpacing(30)
-        self.setLayout(layout)"""
         self.userName = QtGui.QLineEdit(self)
         self.password = QtGui.QLineEdit(self)
         self.loginBtn = QtGui.QPushButton("Login", self)
@@ -87,7 +61,6 @@ class LoginWindow(QtGui.QWidget):
 
         self.loginBtn.clicked.connect(self.login)
 
-
     def login(self):
         if authenticate_login(self.userName.text(), self.password.text()):
             self.mainWindow = Window()
@@ -106,6 +79,13 @@ class FileItem(QtGui.QListWidgetItem):
         QtGui.QListWidgetItem.__init__(self, filename)
         self.filename = filename
         self.key = key
+
+class Report(QtGui.QListWidgetItem):
+    def __init__(self, title, owner, report_files, short_desc):
+        QtGui.QListWidgetItem.__init__(self, title)
+        self.owner = owner
+        self.report_files = report_files
+        self.short_desc = short_desc
 
 
 class FileList(QtGui.QListWidget):
@@ -132,18 +112,18 @@ class FileList(QtGui.QListWidget):
         while i < files.count():
             item = FileItem('', '')
             file = files.item(i)
-            encrypted = self.encrypt_file(file.filename, file.key[0])
+            encrypted = self.encrypt_file(file.filename, file.key)
             item.filename = (str(encrypted)[26:len(str(encrypted)) - 2])
             item.setText(item.filename)
-            item.key = file.key
+            item.key = None
             item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
             item.setCheckState(QtCore.Qt.Unchecked)
             self.addItem(item)
             i += 1
 
     def encrypt_file(self, file_name, symm_key):
-        hash_key = SHA256.new(symm_key)
-        hash_key.digest()
+        hash_key = SHA256.new()
+        hash_key.update(symm_key)
         key_size16 = hash_key.digest()[0:16]
         try:
             fout = open(file_name + '.enc', 'wb')
@@ -170,8 +150,8 @@ class FileList(QtGui.QListWidget):
             return False
 
     def decrypt_file(self, file_name, symm_key):
-        hash_key = SHA256.new(symm_key)
-        hash_key.digest()
+        hash_key = SHA256.new()
+        hash_key.update(symm_key)
         key_size16 = hash_key.digest()[0:16]
         totaltext = ''
         try:
@@ -183,7 +163,6 @@ class FileList(QtGui.QListWidget):
 
             #print(plaintext)
 
-            print(file_name)
             index = file_name.rindex("/")
             newfile = file_name[:index+1] + "DEC_" + file_name[index+1:-4]
             fout = open(newfile, 'wb')
@@ -203,6 +182,15 @@ class FileList(QtGui.QListWidget):
         i = 0
         while i < files.count():
             item = files.item(i)
+            #random_generator = Random.new().read
+            #key = RSA.generate(1024, 1246832)
+            #public = key.publickey()
+            """key2 = self.key_input()
+            if key2 != item.key:
+                print(item.key)
+                print(key2)
+                print("Invalid Key.")
+                break"""
             j = 0
             same = False
             while j < self.count():
@@ -210,10 +198,26 @@ class FileList(QtGui.QListWidget):
                     same = True
                     break
                 j += 1
-            if item.checkState() == QtCore.Qt.Checked and not same:
-                decrypted = self.decrypt_file(item.text(), item.key[0])
-                self.addItem(str(decrypted)[26:len(str(decrypted))-2])
             i += 1
+            if item.checkState() == QtCore.Qt.Checked:
+                decrypted = self.decrypt_file(item.text(), item.key)
+                self.addItem(str(decrypted)[26:len(str(decrypted))-2])
+
+    def key_input(self, fileItem):
+        self.keyIn2 = KeyInput()
+        self.keyIn2.show()
+        self.keyIn2.key.returnPressed.connect(lambda: self.set_key(self.secret_string2(self.keyIn2.key.text()), fileItem, self.keyIn2))
+
+    def set_key(self, key, fileItem, keyIn):
+        fileItem.key = key
+        keyIn.close()
+
+    def secret_string2(self, string):
+        """encoded_string = public_key.encrypt(str.encode(string), 32)
+        return encoded_string"""
+        b = bytes(string, ('utf-8'))
+        #enc_data = public_key.encrypt(b, None)
+        return b
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
@@ -247,6 +251,9 @@ class FileList(QtGui.QListWidget):
     def doubleClickedSlot(self, item):
         os.startfile(item.text())
 
+    @pyqtSlot(QtGui.QListWidgetItem)
+    def doubleClickedSlot2(self, item):
+        self.key_input(item)
 
 class Window(QtGui.QMainWindow):
 
@@ -284,31 +291,48 @@ class Window(QtGui.QMainWindow):
 
         encBtn = QtGui.QPushButton("Encrypt Files", self)
         encBtn.resize((encBtn.sizeHint()))
-        encBtn.move(450, 200)
+        encBtn.move(385, 250)
         encBtn.clicked.connect(self.add_encrypted_files)
 
         decBtn = QtGui.QPushButton("Decrypt Files", self)
         decBtn.resize((decBtn.sizeHint()))
-        decBtn.move(450, 275)
+        decBtn.move(520, 250)
         decBtn.clicked.connect(self.decrypt_all_files)
 
-        uplAllBtn = QtGui.QPushButton("Download Enc Files", self)
+        """uplAllBtn = QtGui.QPushButton("Download Enc Files", self)
         uplAllBtn.resize(uplAllBtn.sizeHint())
         uplAllBtn.move(100, 515)
-        uplAllBtn.clicked.connect(self.download_files)
+        uplAllBtn.clicked.connect(self.download_files)"""
 
         dlBtn = QtGui.QPushButton("Download Dec Files", self)
         dlBtn.resize(dlBtn.sizeHint())
         dlBtn.move(780, 515)
         dlBtn.clicked.connect(self.download_files)
 
-        encFiles = QtGui.QLabel("Encrypted Files", self)
-        encFiles.resize(encFiles.sizeHint())
-        encFiles.move(120, 75)
+        reports = QtGui.QLabel("Reports", self)
+        reports.resize(reports.sizeHint())
+        reports.move(140, 75)
 
         decFiles = QtGui.QLabel("Decrypted Files", self)
         decFiles.resize(decFiles.sizeHint())
         decFiles.move(790, 75)
+
+        self.report_files = FileList(self)
+        self.report_files.resize(250, 150)
+        self.report_files.move(375, 350)
+
+        rep_files = QtGui.QLabel("Report Files", self)
+        rep_files.resize(rep_files.sizeHint())
+        rep_files.move(465, 330)
+
+        self.short_desc = QtGui.QTextEdit(self)
+        self.short_desc.setReadOnly(True)
+        self.short_desc.resize(250, 100)
+        self.short_desc.move(375, 100)
+
+        sh_desc = QtGui.QLabel("Short Description", self)
+        sh_desc.resize(sh_desc.sizeHint())
+        sh_desc.move(455, 80)
 
         self.reportList.move(20, 100)
         self.reportList.resize(300, 400)
@@ -318,10 +342,11 @@ class Window(QtGui.QMainWindow):
         self.reportList.setDragEnabled(False)
         self.decList.setAcceptDrops(False)
         self.decList.setDragEnabled(False)
-        self.reportList.connect(self.reportList,SIGNAL("itemDoubleClicked(QListWidgetItem*)"),
-                                self.reportList,SLOT("doubleClickedSlot(QListWidgetItem*)"))
+        self.report_files.connect(self.report_files,SIGNAL("itemDoubleClicked(QListWidgetItem*)"),
+                                self.report_files,SLOT("doubleClickedSlot2(QListWidgetItem*)"))
         self.decList.connect(self.decList,SIGNAL("itemDoubleClicked(QListWidgetItem*)"),
                                 self.decList,SLOT("doubleClickedSlot(QListWidgetItem*)"))
+
 
     def close_application(self):
         sys.exit()
@@ -341,24 +366,24 @@ class Window(QtGui.QMainWindow):
         self.files.show()
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Load File', '')
         if filename:
-            random_generator = Random.new().read
-            key = RSA.generate(1024, random_generator)
-            public = key.publickey()
+            #random_generator = Random.new().read
+            #key = RSA.generate(1024, 1246832)
+            #public = key.publickey()
             self.keyIn = KeyInput()
             self.keyIn.show()
-            self.keyIn.key.returnPressed.connect(lambda: self.files.create_enc_object(filename, self.secret_string(self.keyIn.key.text(), public), self.keyIn))
+            self.keyIn.key.returnPressed.connect(lambda: self.files.create_enc_object(filename, self.secret_string(self.keyIn.key.text()), self.keyIn))
         #self.files.encFiles.addFile(filename)
         self.files.addFilesBtn.clicked.connect(self.encrypt_All_Files)
 
     def open_file(self):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Load File', '')
 
-    def secret_string(self, string, public_key):
+    def secret_string(self, string):
         """encoded_string = public_key.encrypt(str.encode(string), 32)
         return encoded_string"""
-        b = bytes(string, 'utf-8')
-        enc_data = public_key.encrypt(b, None)
-        return enc_data
+        b = bytes(string,('utf-8'))
+        #enc_data = public_key.encrypt(b, None)
+        return b
 
     def encrypt_All_Files(self):
         #Add encryption algorithm using key field of fileItem object
@@ -372,13 +397,13 @@ class Window(QtGui.QMainWindow):
             encrypted = self.encrypt_file(file.filename, file.key[0])
             self.reportList.addItem(str(encrypted)[26:len(str(encrypted)) - 2])
             i += 1"""
-        self.reportList.addFiles(self.files.encFiles)
+        self.report_files.addFiles(self.files.encFiles)
         self.files.close()
         self.show()
 
     #To do
     def decrypt_all_files(self):
-        self.decList.decrypt_files(self.reportList)
+        self.decList.decrypt_files(self.report_files)
 
 
 class KeyInput(QtGui.QWidget):
@@ -437,7 +462,7 @@ class AddFileDialog(QtGui.QWidget):
         self.encFiles.addItem(fileIt)
 
 if __name__ == "__main__":
-    load_user_database("users.csv")
+    #load_user_database("users.csv")
     app = QtGui.QApplication(sys.argv)
     w = Window()
     w.show()
