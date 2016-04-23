@@ -19,6 +19,10 @@ from django.core.urlresolvers import reverse
 from safecollabapp.models import Document
 from safecollabapp.forms import DocumentForm
 
+#------------------------------------
+# added for search
+from django.db.models import Q
+
 
 def list(request):
     # Handle file upload
@@ -42,6 +46,35 @@ def list(request):
         {'documents': documents, 'form': form},
         context_instance=RequestContext(request)
     )
+
+# search report models within data base
+def search_documents(request):
+    # Initially empty as we don't know if their password was invalid
+    context_dict = {
+        'search_results': '',
+    }
+
+    if request.method == 'POST': # Check if they submitted the login form
+
+        keyword = request.POST.get('keyword')
+
+        # select all Documents where name or description contains keyword
+        search_results = Document.objects.filter(
+                            Q(name__icontains=keyword)
+                            | Q(description__icontains=keyword)
+                        )
+        result_names = []
+        for search_result in search_results:
+            result_names.append(search_result.name)
+
+        context_dict['search_results'] = result_names
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+    else:
+        # stay on current page?
+        redirect('/index/')
+
 
 #---------------------------------
 
