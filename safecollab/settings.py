@@ -89,18 +89,16 @@ DATABASES = {
 }
 """
 # This is the configuration for PostgreSQL
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'testdb',
         'HOST': '127.0.0.1',
         'PORT': '5432',
-        'USER': 'postgres',
-        'PASSWORD': 'postgrebtb8db'
+        'USER': '',
+        'PASSWORD': ''
     }
 }
-
 
 # Extra DB configuration for Heroku
 #db_from_env = dj_database_url.config(conn_max_age=500)

@@ -36,7 +36,7 @@ $(document).ready(function() {
           $.notify('User successfully added!', "success");
           var td_num_users = $('#td_num_users_' + group_name)[0];
           var cur_users = parseInt(td_num_users.innerHTML);
-          td_num_users.innerHTML = cur_users + 1
+          td_num_users.innerHTML = cur_users + 1 // Change num_users in the table by 1
         }
       },
 
@@ -180,6 +180,44 @@ $(document).ready(function() {
     })
     return false;
   })
+
+  /* view a report */
+  $('form.view-report-form').on('submit', function(event) {
+    event.preventDefault();
+
+    var form = $(event.target);
+    reportName = form.find('#report_name').val();
+
+    data_dict = {
+      'short_desc' : reportName,
+    };
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/view_report/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        $('#viewreport-response').html(
+            '<h3>' + json['short_desc'] + '</h3>' +
+            '<h4>' + json['time'] + '</h4>' +
+            '<p>' + json['long_desc'] + '</p>'
+            );
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+  });
 
   /* Restore a User Account */
   $('a.link-restore').click(function() {
