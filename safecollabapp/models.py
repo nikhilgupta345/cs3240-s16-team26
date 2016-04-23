@@ -15,6 +15,7 @@ class PrivateMessage(models.Model):
 
 #-----------------------------------------------------------------------------------------
 # potential models and helper functions to generate paths for reports and documents
+"""
 def report_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/instance.owner/instance.name
     return '{0}/{1}'.format(instance.owner, instance.name)
@@ -38,12 +39,15 @@ class DataFile(models.Model):
     name = models.CharField(max_length=128)
     owner = models.CharField(max_length=128)
     encrypted = models.BooleanField()
-    upload = models.FileField(upload_to=datafile_path)
+    #upload = models.FileField(upload_to=datafile_path)
 
     def __str__(self):  # use __unicode__ for Python 2, use __str__ on Python 3
         return self.name
+"""
 
 #-----------------------------------------------------------------------------------------
 # temporary model used for file upload example
 class Document(models.Model):
+    name = models.CharField(max_length=128,  default='default')
+    description = models.CharField(max_length=1000,  default='descript')
     docfile = models.FileField(upload_to='documents/%Y/%m/%d')
