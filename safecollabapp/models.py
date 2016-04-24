@@ -33,7 +33,7 @@ def report_path(instance, filename):
     return '{0}/{1}'.format(instance.owner, instance.name)
 
 def datafile_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/instance.owner/instance.name
+    # file will be uploaded to MEDIA_ROOT/instance.report.short_desc/instance.owner/instance.name
     return '{0}/{1}/{2}'.format(instance.report.short_desc, instance.owner, instance.name)
 
 class RFile(models.Model):

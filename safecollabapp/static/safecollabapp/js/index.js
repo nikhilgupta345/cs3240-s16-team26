@@ -273,14 +273,102 @@ $(document).ready(function() {
             '<h3>' + json['short_desc'] + '</h3>' +
             '<h4>' + json['time'] + '</h4>' +
             '<p>' + json['long_desc'] + '</p>' +
-            '<p>' + json['file_name'] + '</p>'
+            '<p>' + json['file_name'] + '</p>' +
+            '<p><form action="" class="begin-edit-report-form" method="POST">' +
+            '<input type="hidden" name="report_name" value="' + json['short_desc'] + '" />' +
+            '<input type="submit" value="Edit Report" class="btn btn-primary" /></form></p>' +
+            '<p><form action="/delete_report/" class="delete-report-form" method="POST">' +
+            '<input type="hidden" name="report_name" value="' + json['short_desc'] + '" />' +
+            '<input type="submit" value="Delete Report" class="btn btn-danger" /></form></p>'
             );
+
+        $('form.delete-report-form').on('submit', function(event) {
+          event.preventDefault();
+          csrftoken = getCookie('csrftoken');
+          $.ajaxSetup({
+              beforeSend: function(xhr, settings) {
+                  if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                      xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                  }
+              }
+          });
+
+          var delete_dict = {
+            'report_name' : reportName,
+          };
+
+          $.ajax({
+            url: "/delete_report/",
+            type: "POST",
+            data: delete_dict,
+
+            success: function(json) {
+              window.location.href="/index/";
+            },
+
+            error: function(xhr, errmsg, err) {
+              console.log('error');
+            }
+          });
+          
+        });
+
+        $('form.begin-edit-report-form').on('submit', function(event) {
+            event.preventDefault();
+            $('#viewreport-response').html(
+              '<div class="form-group">' +
+              '<form action="/edit_report/" class="edit-report-form" method="POST">' +
+              '<input type="text" id="short_desc" name="short_desc" class="form-control" value="' + json['short_desc'] + '" />' +
+              '<h4>' + json['time'] + '</h4>' +
+              '<textarea id="long_desc" name="long_desc" rows="8" id="long_desc" class="form-control">' + json['long_desc'] + '</textarea>' +
+              '<p>' + json['file_name'] + '</p>' +
+              '<input type="submit" value="Save Changes" class="form-control btn btn-primary" />' +
+              '</form></div>'
+                );
+
+            $('form.edit-report-form').on('submit', function(event) {
+              event.preventDefault();
+              var form = $(event.target);
+              short_desc = form.find('#short_desc').val();
+              long_desc = form.find('#long_desc').val();
+
+              var edit_dict = {
+                'original_name' : reportName, // we get this for free via closure
+                'short_desc' : short_desc,
+                'long_desc' : long_desc,
+              };
+
+              csrftoken = getCookie('csrftoken');
+              $.ajaxSetup({
+                  beforeSend: function(xhr, settings) {
+                      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                      }
+                  }
+              });
+
+              $.ajax({
+                url: "/edit_report/",
+                type: "POST",
+                data: edit_dict,
+
+                success: function(json) {
+                  window.location.href="/index/";
+                },
+
+                error: function(xhr, errmsg, err) {
+                  console.log('error');
+                }
+              });
+              
+            });
+        });
       },
 
       error: function(xhr, errmsg, err) {
         console.log('error');
       }
-    })
+    });
   });
 
   /* view a report */

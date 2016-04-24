@@ -389,9 +389,10 @@ def create_report(request):
         new_report = Report(owner = owner, short_desc = short_desc, long_desc = long_desc, private = private)
         new_report.save()
 
-        # create RFile for uploaded file and point to report
-        new_rfile = RFile(name=file_name, owner=owner, report=new_report, docfile=request.FILES['docfile'], encrypted=encrypted)
-        new_rfile.save()
+        if('docfile' in request.FILES):
+            # create RFile for uploaded file and point to report
+            new_rfile = RFile(name=file_name, owner=owner, report=new_report, docfile=request.FILES['docfile'], encrypted=encrypted)
+            new_rfile.save()
 
     return redirect('/index/')
 
@@ -404,11 +405,26 @@ def view_report(request):
         report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
         context_dict['short_desc'] = report.short_desc
         context_dict['long_desc'] = report.long_desc
-        context_dict['time'] = report.time.isoformat()
+        context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
         context_dict['owner'] = report.owner.username
         context_dict['file_name'] = 'No files associated with report.'
         files = RFile.objects.filter(report=report)
         for file in files:
             context_dict['file_name'] = file.name
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')
+
+def delete_report(request):
+    if request.method == 'POST':
+        reports = Report.objects.filter(owner=request.user, short_desc = request.POST.get('report_name')).delete()
+
+        return redirect('/index/')
+    return redirect('/index/')
+
+def edit_report(request):
+    if request.method == 'POST':
+        report = Report.objects.filter(short_desc = request.POST.get('original_name'))[0]
+        report.short_desc = request.POST.get('short_desc')
+        report.long_desc = request.POST.get('long_desc')
+        report.save()
     return redirect('/index/')
