@@ -90,7 +90,6 @@ DATABASES = {
 }
 """
 
-"""
 # This is the configuration for PostgreSQL
 DATABASES = {
     'default': {
@@ -100,19 +99,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-"""
-
 # Extra DB configuration for Heroku
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'd29465clrn1cfv',
-        'HOST': 'ec2-54-235-93-178.compute-1.amazonaws.com',
-        'PORT': '5432',
-        'USER': 'awndelqyqukkhw',
-        'PASSWORD': 'fjwnXJZI-kycejxLmTb9wnx1eh'
-    }
-}
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
 
