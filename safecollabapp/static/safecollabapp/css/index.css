@@ -1,7 +1,33 @@
+html {
+	height:100%;
+}
+
 body {
     padding-top: 40px;
     background-image: url("http://www.freebiesgallery.com/wp-content/uploads/2014/02/blurred-background-2.jpg");
     background-size: cover;
+    height:100%;
+}
+
+footer {
+  position: absolute;
+  bottom:0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 40px;
+  color: #fff;
+  margin-top:10px;
+  margin-bottom:20px;
+  text-align:center;
+}
+
+h1, h5 {
+  text-align: center;
+  color: #ffffff;
+}
+
+.transparent {
+	background-color: rgba(0,0,0,0.0);
 }
 
 #login-message {
@@ -12,20 +38,7 @@ body {
   text-align: center;
   color: red;
 }
-.footer {
-  position: absolute;
-  bottom:0;
-  width: 100%;
-  /* Set the fixed height of the footer here */
-  height: 60px;
-  color: #fff;
-  text-align:center;
-}
 
-h1, h5 {
-  text-align: center;
-  color: #ffffff;
-}
 #form-container {
 	height:100%;
 }

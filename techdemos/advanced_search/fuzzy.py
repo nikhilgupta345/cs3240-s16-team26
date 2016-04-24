@@ -12,7 +12,7 @@ for file in files:
     rating = fuzz.token_set_ratio(file, search)
     ratio[file] = rating
 
-new = sorted(ratio, key=ratio.get)
+new = sorted(ratio, key=ratio.get, reverse=True)
 
 print(new)
 
