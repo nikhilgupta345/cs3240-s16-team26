@@ -224,6 +224,7 @@
                         <li class="active"><a href="#assign-manager" data-toggle="tab">Assign Managers</a></li>
                         <li><a href="#sitemanager-users" data-toggle="tab">Manage Users</a></li>
                         <li><a href="#sitemanager-groups" data-toggle="tab">Manage Groups</a></li>
+                        <li><a href="#sitemanager-reports" data-toggle="tab">All Reports</a></li>
                       </ul>
                       <div class="tab-content">
                         <div id="assign-manager" class="tab-pane fade">
@@ -309,6 +310,34 @@
                                     <button type="submit" class="btn btn-default" id="sitemanager_create_group_button">Create</button>
                                   </form>
                                 </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div id="sitemanager-reports" class="tab-pane fade">
+                          <div class="container" style="height:100%; width:100%">
+                            <div class="row">
+                              <div class="col-sm-12">
+                                <h3>Reports</h3>
+                              </div>
+                            </div>
+                            <div class="row" style="height:100%; width:100%">
+                              <div class="col-sm-4">
+                                <div class="list-group">
+                                  {% for report in all_reports %}
+                                    <form action="/view_report/" class="sitemanager-view-report-form" method="POST">
+                                      {% csrf_token %}
+                                      <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}"/>{{report.short_desc}}
+                                    {% if report.private %}
+                                      <span class="label label-default label-pill pull-right">Private</span>
+                                    {% endif %}
+                                    </button>
+                                    </form>
+                                  {% endfor %}
+                                </div>
+                              </div>
+                              <div class="col-sm-8">
+                                <div id="sitemanager-viewreport-response"></div>
                               </div>
                             </div>
                           </div>

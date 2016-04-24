@@ -221,6 +221,7 @@ def index(request):
         'users_list' : User.objects.all(),
         'messages_list' : get_messages(request.user),
         'reports_list' : get_reports(request.user),
+        'all_reports': Report.objects.all(),
         'groups' : group_info,
     }
 
