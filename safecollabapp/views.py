@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
-from safecollabapp.models import PrivateMessage
+from safecollabapp.models import PrivateMessage, Folder, Report, RFile
 
 #---------------------------------
 # added for file upload example
@@ -63,6 +63,62 @@ def is_manager(user):
 # Returns a list of Users who are Site-Managers
 def get_managers():
     return User.objects.filter(groups__name='site-manager')
+
+def add_user_to_group(request):
+    if request.method == "POST":
+        context_dict = {
+            'response': ''
+        }
+
+        group_name = request.POST.get('group_name')
+        username = request.POST.get('username')
+
+        g = Group.objects.get(name=group_name)
+        try:
+            print(username)
+            user = User.objects.get(username=username)
+            if user in g.user_set.all():
+                context_dict['response'] = 'User already in group!'
+            else:
+                user.groups.add(g)
+        except:
+            context_dict['response'] = 'Invalid User!'
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    else:
+        return redirect('/index/')
+
+def create_group(request):
+    if request.method == 'POST': # Check if they submitted the form to create a new group
+        name = request.POST.get('group_name') # Get the group name that they wish to add
+        context_dict = {
+            'response' : '',
+            'usernames': [],
+        }
+
+        users = User.objects.all()
+        for user in users:
+            context_dict['usernames'].append(user.username)
+
+
+        if len(name) == 0:
+            context_dict['response'] = 'You must enter a group name.'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+        try:
+            g = Group.objects.get(name=name)
+
+            context_dict['response'] = 'There is already a group on the site with that name!'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+        except:                
+            g = Group(name=name)
+            g.save()    
+            request.user.groups.add(g)
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+    else:
+        return redirect('/index/')
 
 def add_manager(request):
     if request.method == 'POST': # Check if they submitted the form to add an SM
@@ -149,12 +205,25 @@ def restore_user(request):
 def index(request):
     if not request.user.is_authenticated(): # If not logged in send back to login page
         return redirect('/login/')
+    group_info = []
+    groups = request.user.groups.exclude(name='site-manager')
+
+    for group in groups:
+        group_info.append({
+            'group':group, 
+            'num_users':len(group.user_set.all())
+        })
+
 
     context_dict = {
         'is_manager': is_manager(request.user), # Is this user a manager?
         'site_managers_list' : get_managers(), # the list of current site-managers
         'users_list' : User.objects.all(),
-        'messages' : get_messages(request.user),
+        'messages_list' : get_messages(request.user),
+        'reports_list' : get_reports(request.user),
+        'all_reports': Report.objects.all(),
+        'groups' : group_info,
+        'doc_form' : DocumentForm(),
     }
 
     return render(request, 'index.html', context_dict)
@@ -179,8 +248,9 @@ def login(request): # Home page and login screen
                 return render(request, 'login.html', context_dict)
 
             auth_login(request, user) # Log the user in if they do
-            if(remember != None):
+            if(remember is not None):
                 request.session['username'] = username # Set a session so they're remembered next time
+
             return redirect('/index/')
         else:
             context_dict['login_message'] = 'Invalid username and password combination.'
@@ -253,18 +323,28 @@ def register(request):
 
                     user.save()
 
-                    print('Before authentication')
                     user = authenticate(username = username, password = password) # Authenticate him with these credentials
                     if user == None:
                         context_dict['response'] = 'redirect_login'
                         return HttpResponse(json.dumps(context_dict), content_type="application/json")
 
                     auth_login(request, user) # Log the user in if they do
-                    print('After login')
                     
                     request.session['username'] = username # Set a session so they're remembered next time
+
+                    if username == "admin": # Username 'admin' is a default site-manager if not already full
+                        try:
+                            g = Group.objects.get(name='site-manager')
+                        except:
+                            g = Group(name='site-manager')
+                            g.save()
+                            pass
+
+                        num_managers = len(g.user_set.all())
+                        if num_managers is not 3: # Already full
+                            user.groups.add(g)
+
                     context_dict['response'] = 'redirect_index'
-                    print('SUCCESS')
                     return HttpResponse(json.dumps(context_dict), content_type="application/json")
             except ValidationError:
                 context_dict['register_message'] = 'That is not a valid email address.'
@@ -290,7 +370,45 @@ def send_message(request):
 
     return redirect('/index/')
 
-
 # gets all messages sent to a certain user
 def get_messages(user):
     return PrivateMessage.objects.filter(recipient=user)
+
+def create_report(request):
+    if request.method == 'POST':
+        # get all values from request
+        owner = request.user
+        short_desc = request.POST.get('short_desc')
+        long_desc = request.POST.get('long_desc')
+        private = request.POST.get('private') is not None # is the box checked?
+        file_name = request.POST.get('fname')
+        encrypted = request.POST.get('encrypted') is not None # is the box checked?
+        file_form = DocumentForm(request.POST, request.FILES)
+
+        # save new report
+        new_report = Report(owner = owner, short_desc = short_desc, long_desc = long_desc, private = private)
+        new_report.save()
+
+        # create RFile for uploaded file and point to report
+        new_rfile = RFile(name=file_name, owner=owner, report=new_report, docfile=request.FILES['docfile'], encrypted=encrypted)
+        new_rfile.save()
+
+    return redirect('/index/')
+
+def get_reports(user):
+    return Report.objects.filter(owner=user)
+
+def view_report(request):
+    if request.method == 'POST':
+        context_dict = {'short_desc' : ''}
+        report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
+        context_dict['short_desc'] = report.short_desc
+        context_dict['long_desc'] = report.long_desc
+        context_dict['time'] = report.time.isoformat()
+        context_dict['owner'] = report.owner.username
+        context_dict['file_name'] = 'No files associated with report.'
+        files = RFile.objects.filter(report=report)
+        for file in files:
+            context_dict['file_name'] = file.name
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')
