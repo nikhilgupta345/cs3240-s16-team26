@@ -8,8 +8,22 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random
 from Crypto.Hash import SHA256
-import msvcrt as m
-import time
+#import django
+from django.core.wsgi import get_wsgi_application
+from django.contrib.auth import authenticate
+
+####This part is to get the standAlone to access our Django Project####
+
+#BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+#sys.path.append(BASE_DIR)
+
+#os.chdir(BASE_DIR)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "safecollab.settings")
+
+application = get_wsgi_application()
+
+####End accessing django, beginning of stand-alone app####
 
 
 PG_USER = "postgres"
@@ -18,23 +32,35 @@ PG_HOST_INFO = ""
 PG_DATABASE = "testdb"
 
 def authenticate_login(username, password):
-    conn = psycopg2.connect("dbname=" + PG_DATABASE  + " user=" + PG_USER + " password=" + PG_USER_PASS + PG_HOST_INFO)
+    """conn = psycopg2.connect("dbname=" + PG_DATABASE  + " user=" + PG_USER + " password=" + PG_USER_PASS + PG_HOST_INFO)
     cur1 = conn.cursor()
     cur2 = conn.cursor()
     cur1.execute('SELECT username FROM auth_user')
-    cur2.execute('SELECT password FROM auth_user')
-    usr = False
+    cur2.execute('SELECT password FROM auth_user')"""
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        # the password verified for the user
+        if user.is_active:
+            return True
+        else:
+            print("The password is valid, but the account has been disabled!")
+    else:
+        # the authentication system was unable to verify the username and password
+        print("The username and password were incorrect.")
+    """usr = False
     pas = False
     for user in cur1.fetchall():
+        print(user)
         if user == username:
             usr = True
     for passw in cur2.fetchall():
+        print(passw)
         if passw == password:
             pas = True
     if usr and pas:
         return True
     else:
-        return False
+        return False"""
 
 class LoginWindow(QtGui.QWidget):
 
@@ -63,7 +89,8 @@ class LoginWindow(QtGui.QWidget):
 
     def login(self):
         if authenticate_login(self.userName.text(), self.password.text()):
-            self.mainWindow = Window()
+            user = self.userName.text()
+            self.mainWindow = Window(user)
             self.mainWindow.show()
             self.close()
         else:
@@ -257,8 +284,9 @@ class FileList(QtGui.QListWidget):
 
 class Window(QtGui.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, username):
         super(Window, self).__init__()
+        self.username = username
         self.resize(1000, 600)
         self.setWindowTitle("File Download Application")
         """self.setWindowIcon(QtGui.QIcon(filename))"""
@@ -464,10 +492,10 @@ class AddFileDialog(QtGui.QWidget):
 if __name__ == "__main__":
     #load_user_database("users.csv")
     app = QtGui.QApplication(sys.argv)
-    w = Window()
-    w.show()
-    #lg = LoginWindow()
-    #lg.show()
+    #w = Window()
+    #w.show()
+    lg = LoginWindow()
+    lg.show()
     #k = KeyInput()
     #k.show()
     sys.exit(app.exec_())
