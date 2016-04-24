@@ -209,7 +209,8 @@ $(document).ready(function() {
         $('#viewreport-response').html(
             '<h3>' + json['short_desc'] + '</h3>' +
             '<h4>' + json['time'] + '</h4>' +
-            '<p>' + json['long_desc'] + '</p>'
+            '<p>' + json['long_desc'] + '</p>' +
+            '<p>' + json['file_name'] + '</p>'
             );
       },
 

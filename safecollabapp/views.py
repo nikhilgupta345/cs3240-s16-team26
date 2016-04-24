@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
-from safecollabapp.models import PrivateMessage, Folder, Report
+from safecollabapp.models import PrivateMessage, Folder, Report, RFile
 
 #---------------------------------
 # added for file upload example
@@ -222,6 +222,7 @@ def index(request):
         'messages_list' : get_messages(request.user),
         'reports_list' : get_reports(request.user),
         'groups' : group_info,
+        'doc_form' : DocumentForm(),
     }
 
     return render(request, 'index.html', context_dict)
@@ -379,9 +380,17 @@ def create_report(request):
         short_desc = request.POST.get('short_desc')
         long_desc = request.POST.get('long_desc')
         private = request.POST.get('private') is not None # is the box checked?
+        file_name = request.POST.get('fname')
+        encrypted = request.POST.get('encrypted') is not None # is the box checked?
+        file_form = DocumentForm(request.POST, request.FILES)
 
+        # save new report
         new_report = Report(owner = owner, short_desc = short_desc, long_desc = long_desc, private = private)
         new_report.save()
+
+        # create RFile for uploaded file and point to report
+        new_rfile = RFile(name=file_name, owner=owner, report=new_report, docfile=request.FILES['docfile'], encrypted=encrypted)
+        new_rfile.save()
 
     return redirect('/index/')
 
@@ -396,5 +405,9 @@ def view_report(request):
         context_dict['long_desc'] = report.long_desc
         context_dict['time'] = report.time.isoformat()
         context_dict['owner'] = report.owner.username
+        context_dict['file_name'] = 'No files associated with report.'
+        files = RFile.objects.filter(report=report)
+        for file in files:
+            context_dict['file_name'] = file.name
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     return redirect('/index/')

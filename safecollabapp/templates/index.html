@@ -91,12 +91,30 @@
                     </div>
                     <div id="create-reports" class="tab-pane fade">
                       <h3>Create a Report</h3>
-                      <form action="/create_report/" method="POST" id="form-createreport">
+                      <form action="/create_report/" method="POST" id="form-createreport" enctype="multipart/form-data">
                       {% csrf_token %}
                       <div class="form-group">
                         <label for="short_desc">Name:</label><input type="text" name="short_desc" id="short_desc" maxlength="120" class="form-control" />
                         <label for="long_desc">Description:</label><textarea name="long_desc" rows="8" id="long_desc" class="form-control"></textarea>
                         <label for="private">Mark as private:</label><input type="checkbox" name="private" id="private" />
+                        <!-- File upload fields -->
+                        <p>{{ doc_form.non_field_errors }}</p>
+
+                        <p>{{ doc_form.docfile.label_tag }} {{ doc_form.docfile.help_text }}</p>
+                        <p>
+                            {{ doc_form.fname.label_tag }} {{ doc_form.fname.help_text }}
+                            {{ doc_form.fname.errors }}
+                            {{ doc_form.fname }}
+                        </p>
+                        <p>
+                            {{ doc_form.docfile.errors }}
+                            {{ doc_form.docfile }}
+                        </p>
+                        <p>
+                            {{ doc_form.encrypted.label_tag }} {{ doc_form.encrypted.help_text }}
+                            {{ doc_form.encrypted.errors }}
+                            {{ doc_form.encrypted }}
+                        </p>
                         <input type="submit" value="Create Report" class="form-control" />
                       </div>
                       </form>
