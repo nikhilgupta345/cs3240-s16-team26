@@ -15,7 +15,6 @@ class PrivateMessage(models.Model):
 
 class Folder(models.Model):
     name = models.CharField(max_length=128)
-    folder = models.ForeignKey('self', on_delete=models.CASCADE, related_name='+')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
 
 class Report(models.Model):

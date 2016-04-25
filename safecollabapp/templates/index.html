@@ -76,16 +76,31 @@
                             <div class="row" style="height:100%; width:100%">
                               <div class="col-sm-4">
                                 <div class="list-group">
+                                  {% for folder in folders_list %}
+                                    <div id="open-folder-button">
+                                      <form action="/open_folder/" class="open-folder-form" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="list-group-item" name="folder_name" id="folder_name" value="{{folder.name}}">
+                                          <span id="folder-glyph" class="glyphicon glyphicon-folder-close"></span> {{folder.name}}
+                                        </button>
+                                      </form>
+                                    </div>
+                                  {% endfor %}
                                   {% for report in reports_list %}
                                     <form action="/view_report/" class="view-report-form" method="POST">
                                       {% csrf_token %}
-                                      <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}"/>{{report.short_desc}}
+                                      <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}">{{report.short_desc}}
                                     {% if report.private %}
                                       <span class="label label-default label-pill pull-sm-right">Private</span>
                                     {% endif %}
                                     </button>
                                     </form>
                                   {% endfor %}
+                                  <form action="" class="create-folder-form" method="POST">
+                                    <button type="submit" class="list-group-item" name="create_folder" id="create_folder" value="Create Folder">
+                                      <span class="glyphicon glyphicon-plus"></span> Create Folder
+                                    </button>
+                                  </form>
                                 </div>
                               </div>
                               <div class="col-sm-8">
@@ -101,6 +116,13 @@
                           <div class="form-group">
                             <label for="short_desc">Name:</label><input type="text" name="short_desc" id="short_desc" maxlength="120" class="form-control" />
                             <label for="long_desc">Description:</label><textarea name="long_desc" rows="8" id="long_desc" class="form-control"></textarea>
+                            <label for="folder">Folder:</label>
+                            <select name="folder" id="folder" class="form-control">
+                                <option selected="selected" value=""></option>
+                              {% for folder in folders_list %}
+                                <option value="{{ folder.name }}">{{ folder.name }}</option>
+                              {% endfor %}
+                            </select>
                             <label for="private">Mark as private:</label><input type="checkbox" name="private" id="private" />
                             <!-- File upload fields -->
                             <p>{{ doc_form.non_field_errors }}</p>
