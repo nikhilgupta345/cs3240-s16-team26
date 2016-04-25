@@ -18,6 +18,12 @@ from django.core.urlresolvers import reverse
 
 from safecollabapp.models import Document
 from safecollabapp.forms import DocumentForm
+from rest_framework.views import APIView
+from rest_framework import generics
+from safecollabapp.serializers import RFile_Serializer, Report_Serializer
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from rest_framework.response import Response
 
 
 def list(request):
@@ -464,7 +470,7 @@ def open_folder(request):
 
     return redirect('/index/')
 
-def delete_report(request):
+def sm_delete_report(request):
     if request.method == 'POST':
         context_dict = {'response' : ''}
         report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
@@ -474,3 +480,28 @@ def delete_report(request):
 
 def close_folder(request):
     return HttpResponse(json.dumps({}), content_type="application/json")
+
+def download_file(request, fid):
+    file = RFile.objects.get(pk=fid)
+    fname = file.name
+    response = HttpResponse(file.docfile, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename=%s' % fname
+    return response
+
+#@permission_classes(isAuthenticated)
+class standalone_report_list(APIView):
+
+    def get(self, request, username):
+        user = get_object_or_404(User, username=username)
+        queryset = Report.objects.filter(
+            Q(owner=user) | Q(private=False)
+        )
+        serializer = Report_Serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+#@permission_classes(isAuthenticated)
+class standalone_file_list(generics.ListAPIView):
+    serializer_class = RFile_Serializer
+    queryset = RFile.objects.all()
+

@@ -585,7 +585,7 @@ $(document).ready(function() {
 
         $('#sitemanager-viewreport-delete-button').on('click', function() {
           $.ajax({
-            url: "/delete_report/",
+            url: "/sm_delete_report/",
             type: "POST",
             data: {
               'short_desc': reportName
