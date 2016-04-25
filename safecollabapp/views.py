@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
-from safecollabapp.models import PrivateMessage, Folder, Report
+from safecollabapp.models import PrivateMessage, Folder, Report, RFile
 
 #---------------------------------
 # added for file upload example
@@ -220,9 +220,11 @@ def index(request):
         'site_managers_list' : get_managers(), # the list of current site-managers
         'users_list' : User.objects.all(),
         'messages_list' : get_messages(request.user),
+        'folders_list' : get_folders(request.user),
         'reports_list' : get_reports(request.user),
         'all_reports': Report.objects.all(),
         'groups' : group_info,
+        'doc_form' : DocumentForm(),
     }
 
     return render(request, 'index.html', context_dict)
@@ -380,14 +382,33 @@ def create_report(request):
         short_desc = request.POST.get('short_desc')
         long_desc = request.POST.get('long_desc')
         private = request.POST.get('private') is not None # is the box checked?
+        file_name = request.POST.get('fname')
+        encrypted = request.POST.get('encrypted') is not None # is the box checked?
+        file_form = DocumentForm(request.POST, request.FILES)
 
         new_report = Report(owner = owner, short_desc = short_desc, long_desc = long_desc, private = private)
+
+        # Get folder if applicable
+        folder_name = request.POST.get('folder')
+        if folder_name != '':
+            folder = Folder.objects.filter(owner=owner, name=folder_name)[0]
+            new_report.folder = folder
+
+        # save new report
         new_report.save()
+
+        if('docfile' in request.FILES):
+            # create RFile for uploaded file and point to report
+            new_rfile = RFile(name=file_name, owner=owner, report=new_report, docfile=request.FILES['docfile'], encrypted=encrypted)
+            new_rfile.save()
 
     return redirect('/index/')
 
 def get_reports(user):
-    return Report.objects.filter(owner=user)
+    return Report.objects.filter(owner=user, folder=None)
+
+def get_folders(user):
+    return Folder.objects.filter(owner=user)
 
 def view_report(request):
     if request.method == 'POST':
@@ -395,9 +416,52 @@ def view_report(request):
         report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
         context_dict['short_desc'] = report.short_desc
         context_dict['long_desc'] = report.long_desc
-        context_dict['time'] = report.time.isoformat()
+        context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
         context_dict['owner'] = report.owner.username
+        context_dict['file_name'] = 'No files associated with report.'
+        files = RFile.objects.filter(report=report)
+        for file in files:
+            context_dict['file_name'] = file.name
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')
+
+def delete_report(request):
+    if request.method == 'POST':
+        reports = Report.objects.filter(owner=request.user, short_desc = request.POST.get('report_name')).delete()
+
+        return redirect('/index/')
+    return redirect('/index/')
+
+def edit_report(request):
+    if request.method == 'POST':
+        report = Report.objects.filter(short_desc = request.POST.get('original_name'))[0]
+        report.short_desc = request.POST.get('short_desc')
+        report.long_desc = request.POST.get('long_desc')
+        report.save()
+    return redirect('/index/')
+
+def create_folder(request):
+    return HttpResponse(json.dumps({}), content_type="application/json")
+
+def submit_folder(request):
+    if request.method == 'POST':
+        folder_name = request.POST.get('folder_name')
+        folder = Folder(name=folder_name, owner=request.user)
+        folder.save()
+    return redirect('/index/')
+
+def open_folder(request):
+    if request.method == 'POST':
+        folder_name = request.POST.get('folder_name')
+        folder = Folder.objects.filter(owner=request.user, name=folder_name)[0]
+        reports = Report.objects.filter(owner=request.user, folder=folder)
+
+        context_dict = {'reports' : []}
+        for report in reports:
+            context_dict['reports'].append({'short_desc': report.short_desc, 'private' : report.private})
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
     return redirect('/index/')
 
 def delete_report(request):
@@ -407,3 +471,6 @@ def delete_report(request):
         report.delete()
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     return redirect('/index/')
+
+def close_folder(request):
+    return HttpResponse(json.dumps({}), content_type="application/json")

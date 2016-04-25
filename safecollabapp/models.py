@@ -15,12 +15,11 @@ class PrivateMessage(models.Model):
 
 class Folder(models.Model):
     name = models.CharField(max_length=128)
-    folder = models.ForeignKey('self', on_delete=models.CASCADE, related_name='+')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
 
 class Report(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
-#    folder = models.ForeignKey(Folder, on_delete=models.CASCADE, related_name='+')
+    folder = models.ForeignKey(Folder, on_delete=models.CASCADE, null=True, related_name='+')
     time = models.DateTimeField(auto_now_add=True) # timestamp
     short_desc = models.CharField(max_length=120) # short description
     long_desc = models.TextField() # long description
@@ -33,8 +32,8 @@ def report_path(instance, filename):
     return '{0}/{1}'.format(instance.owner, instance.name)
 
 def datafile_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/instance.owner/instance.name
-    return '{0}/{1}/{2}'.format(instance.report.name, instance.owner, instance.name)
+    # file will be uploaded to MEDIA_ROOT/instance.report.short_desc/instance.owner/instance.name
+    return '{0}/{1}/{2}'.format(instance.report.short_desc, instance.owner, instance.name)
 
 class RFile(models.Model):
     name = models.CharField(max_length=128)
