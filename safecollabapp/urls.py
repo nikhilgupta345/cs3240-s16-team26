@@ -18,4 +18,7 @@ urlpatterns = [
     url(r'^list/$', views.list, name='list'),
     url(r'^create_report/$', views.create_report, name='Create Report'),
     url(r'^view_report/$', views.view_report, name='View Report'),
+    url(r'^download/(?P<fid>.*)$', views.download_file, name='Download File'),
+    url(r'^standalone_file_list/$', views.standalone_file_list.as_view(), name='Standalone File List'),
+    url(r'^standalone_report_list/(?P<username>\w+)$', views.standalone_report_list.as_view(), name='Standalone Report List'),
 ]

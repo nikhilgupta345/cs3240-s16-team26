@@ -39,7 +39,7 @@ def datafile_path(instance, filename):
 class RFile(models.Model):
     name = models.CharField(max_length=128)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
-    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='+')
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='files')
     docfile = models.FileField(upload_to=datafile_path)
     encrypted = models.BooleanField(default=False)
 
