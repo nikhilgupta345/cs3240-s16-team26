@@ -18,4 +18,5 @@ urlpatterns = [
     url(r'^list/$', views.list, name='list'),
     url(r'^create_report/$', views.create_report, name='Create Report'),
     url(r'^view_report/$', views.view_report, name='View Report'),
+    url(r'^delete_report/$', views.delete_report, name='Delete Report'),
 ]

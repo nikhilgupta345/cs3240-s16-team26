@@ -311,7 +311,29 @@ $(document).ready(function() {
             '<h3>' + json['short_desc'] + '</h3>' +
             '<h4>' + json['time'] + '</h4>' +
             '<p>' + json['long_desc'] + '</p>'
-            );
+        );
+
+        $('#sitemanager-viewreport-delete').html(
+          '<button type="button" class="btn btn-default" id="sitemanager-viewreport-delete-button">Delete</button>'
+        );
+
+        $('#sitemanager-viewreport-delete-button').on('click', function() {
+          $.ajax({
+            url: "/delete_report/",
+            type: "POST",
+            data: {
+              'short_desc': reportName
+            },
+            success: function() {
+              form.hide();
+              $('#sitemanager-viewreport-response').html('');
+               $('#sitemanager-viewreport-delete').html('');
+            },
+            error: function(xhr, errmsg, err) {
+              console.log('error deleting report');
+            }
+          })
+        })
       },
 
       error: function(xhr, errmsg, err) {

@@ -399,3 +399,11 @@ def view_report(request):
         context_dict['owner'] = report.owner.username
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     return redirect('/index/')
+
+def delete_report(request):
+    if request.method == 'POST':
+        context_dict = {'response' : ''}
+        report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
+        report.delete()
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')
