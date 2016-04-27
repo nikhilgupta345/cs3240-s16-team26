@@ -1,4 +1,6 @@
+from django.db.models.functions import Lower
 from django.shortcuts import render
+from django.http import HttpRequest, HttpResponseRedirect
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 #from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import User, Group
@@ -17,11 +19,13 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 
 from safecollabapp.models import Document
-from safecollabapp.forms import DocumentForm
+from safecollabapp.forms import DocumentForm, SearchReportsForm
 
 #------------------------------------
 # added for search
 from django.db.models import Q
+from functools import reduce
+import operator
 
 
 def list(request):
@@ -29,7 +33,11 @@ def list(request):
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
-            newdoc = Document(docfile=request.FILES['docfile'])
+
+            newdoc = Document(  name=request.POST['name'],
+                                description=request.POST['description'],
+                                docfile=request.FILES['docfile']
+                            )
             newdoc.save()
 
             # Redirect to the document list after POST
@@ -48,33 +56,71 @@ def list(request):
     )
 
 # search report models within data base
-def search_documents(request):
-    # Initially empty as we don't know if their password was invalid
-    context_dict = {
-        'search_results': '',
-    }
+def search_reports(request):
 
-    if request.method == 'POST': # Check if they submitted the login form
+    if request.method == 'POST':
+        form = SearchReportsForm(request.POST)
+        if form.is_valid():
 
-        keyword = request.POST.get('keyword')
+            # parse search critieria from user input
+            delimiter = ";"
+            keyword_input = request.POST['keyword']
+            keywords = keyword_input.split(delimiter)
 
-        # select all Documents where name or description contains keyword
-        search_results = Document.objects.filter(
-                            Q(name__icontains=keyword)
-                            | Q(description__icontains=keyword)
-                        )
-        result_names = []
-        for search_result in search_results:
-            result_names.append(search_result.name)
+            name_input = request.POST['search-report-name']
+            names = name_input.split(delimiter)
 
-        context_dict['search_results'] = result_names
+            short_desc_input = request.POST['search-report-short-desc']
+            short_descs = short_desc_input.split(delimiter)
 
-        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+            #owner = request.POST['owner']
 
+            Q_keywords_name = Q()
+            Q_keywords_desc = Q()
+            for item in keywords:
+                Q_keywords_name |= Q(name__icontains=item)
+                Q_keywords_desc |= Q(description__icontains=item)
+
+            Q_names = Q()
+            for item in names:
+                Q_names |= Q(name__icontains=item)
+
+            Q_short_descs = Q()
+            for item in short_descs:
+                Q_short_descs |= Q(description__icontains=item)
+
+            # select all Documents where name or description contains keyword
+            search_results = Document.objects.filter(
+                                ( Q_keywords_name | Q_keywords_desc )
+                                & Q_names
+                                & Q_short_descs
+                                ).order_by(Lower('name').desc())
+            # use this for searching actual reports
+            """
+            search_results = Report.objects.filter(
+                                Q(name__icontains=keyword)
+                                | Q(short_desc__icontains=keyword)
+                                | Q(time__icontains=keyword)
+                                | Q(owner__icontains=keyword)
+                            ).order_by('-time')
+            """
+
+            #return HttpResponseRedirect(reverse('safecollabapp.views.search'))
+
+            # Render index page with the search results and the form
+            return render_to_response(
+                'index.html',
+                {'search_results': search_results, 'form': form},
+                context_instance=RequestContext(request)
+            )
     else:
         # stay on current page?
-        redirect('/index/')
+        return redirect('/index/')
 
+def parse_search_criteria(user_input):
+    criteria = []
+    criteria = user_input.split(";")
+    return criteria
 
 #---------------------------------
 

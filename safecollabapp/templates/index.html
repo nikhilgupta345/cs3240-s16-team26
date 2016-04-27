@@ -72,7 +72,7 @@
                         <div class="row" style="height:100%; width:100%">
                           <div class="col-sm-4">
                             <div class="list-group">
-                              {% for report in reports_list %}
+                              {% for report in short_desc %}
                                 <form action="/view_report/" class="view-report-form" method="POST">
                                   {% csrf_token %}
                                   <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}"/>{{report.short_desc}}
@@ -90,39 +90,48 @@
                         </div>
                       </div>
                     </div>
+
+
                     <div id="search" class="tab-pane fade">
-                      <h3>A</h3>
-                      <p>Search all documents.</p>
-                        <form id="search-form" action="/search/" method="post" role="form" style="display: block;">
-                        {% csrf_token %}
-                            <div class="form-group">
-                                <input type="submit" name="search-submit" id="search-submit" tabindex="1" class="form-control btn btn-search" value="Search">
-                                <input type="text" name="keyword" id="keyword" tabindex="1" class="form-control" placeholder="Keyword" value="">
-                            </div>
+                      <h3>Search for Reports</h3>
+                        <form id="search-form" action="/search/" method="post">
+                            {% csrf_token %}
+                                <div class="form-group">
+
+                                    <input type="text" name="keyword" id="keyword" tabindex="1" class="form-control" placeholder="All Fields" value="">
+                                    <input type="text" name="search-report-name" id="search-report-name" tabindex="1" class="form-control" placeholder="Name" value="">
+                                    <input type="text" name="search-report-short-desc" id="search-report-short-desc" tabindex="1" class="form-control" placeholder="Short Description" value="">
+                                    <input type="submit" name="search-submit" id="search-submit" tabindex="1" class="form-control" value="Search" data-target="#search-results-table">
+                                </div>
                         </form>
 
-                        <table class="table table-hover" id="groups_table">
-                        <thead>
-                          <tr>
-                            <th>Name</th>
-                            <th>Description</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {% for result in search_results %}
-                          <tr>
-                           <td> {{ result }} </td>
-
-                          </tr>
-                          {% endfor %}
-                      </table>
-
-
-
-
-
-
+                        <table class="table table-hover" id="search-results-table">
+                            <thead>
+                              <tr>
+                                  <th>Name</th>
+                                  <th>Short Description</th>
+                                  <th>FDA Signature (Link)</th>
+                                  <!--
+                                  <th>Name</th>
+                                  <th>Short Description</th>
+                                  <th>Owner</th>
+                                  <th>Date</th>
+                                  -->
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for result in search_results %}
+                                <tr>
+                                    <td> {{ result.name }} </td>
+                                    <td> {{ result.description }} </td>
+                                    <td><a href="{{ result.docfile.url }}">{{ result.docfile.name }}</a></td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
+
+
                     <div id="create-reports" class="tab-pane fade">
                       <h3>Create a Report</h3>
                       <form action="/create_report/" method="POST" id="form-createreport">

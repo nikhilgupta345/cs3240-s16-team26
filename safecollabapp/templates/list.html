@@ -23,10 +23,21 @@
             <p>{{ form.non_field_errors }}</p>
 
             <p>{{ form.docfile.label_tag }} {{ form.docfile.help_text }}</p>
-
             <p>
                 {{ form.docfile.errors }}
                 {{ form.docfile }}
+            </p>
+
+            <p>{{ form.name.label_tag }} {{ form.name.help_text }}</p>
+            <p>
+                {{ form.name.errors }}
+                {{ form.name }}
+            </p>
+
+            <p>{{ form.description.label_tag }} {{ form.descritpion.help_text }}</p>
+            <p>
+                {{ form.description.errors }}
+                {{ form.description }}
             </p>
 
             <p><input type="submit" value="Upload"/></p>
