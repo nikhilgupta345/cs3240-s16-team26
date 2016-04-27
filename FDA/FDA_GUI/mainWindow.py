@@ -274,10 +274,8 @@ class FileList(QtGui.QListWidget):
         l_desc.setText(self.currentItem().long_desc)
         for x in self.currentItem().report_files:
             if isinstance(x, dict):
-                print(x['docfile'])
                 index = x['docfile'].rindex("/")
                 name = x['docfile'][index+1:len(x['docfile'])]
-                print(name)
                 if x['name'] == "":
                     x['name'] = "Unnamed"
                 if x['encrypted'] == True:
@@ -440,7 +438,6 @@ class Window(QtGui.QMainWindow):
             if not os.path.isfile(self.report_files.item(i).path):
                 with open(self.report_files.item(i).path, 'wb') as f:
                     f.write(r.content)
-                print(self.report_files.item(i).path)
             i += 1
 
     #Open add file window for file encryption
