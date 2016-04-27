@@ -483,7 +483,7 @@ def close_folder(request):
 
 def download_file(request, fid):
     file = RFile.objects.get(pk=fid)
-    fname = file.name
+    fname = file.docfile.name
     response = HttpResponse(file.docfile, content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename=%s' % fname
     return response
