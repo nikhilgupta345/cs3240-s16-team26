@@ -8,6 +8,10 @@ from django.core.wsgi import get_wsgi_application
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 import requests
+import cgi
+import shutil
+from os.path import expanduser
+import copy
 
 ####This part is to get the standAlone to access our Django Project####
 
@@ -18,6 +22,12 @@ application = get_wsgi_application()
 fs = FileSystemStorage(location = '/media/')
 
 base_path = "http://127.0.0.1:8000/"
+
+#base_path = "http://damp-sierra-38619.herokuapp.com/"
+
+home = expanduser("~")
+home_file_path = copy.deepcopy(home)
+home_file_path = home_file_path.replace("\\", "/")
 
 ####End accessing django, beginning of stand-alone app####
 
@@ -68,11 +78,12 @@ class LoginWindow(QtGui.QWidget):
 #Class to store file information for encrytion and decryption
 class FileItem(QtGui.QListWidgetItem):
 
-    def __init__(self, filename, key, id):
+    def __init__(self, filename, key, id, path):
         QtGui.QListWidgetItem.__init__(self, filename)
         self.filename = filename
         self.key = key
         self.id = id
+        self.path = path
 
 #Class to store report information when pulled from the server
 class Report(QtGui.QListWidgetItem):
@@ -102,10 +113,14 @@ class FileList(QtGui.QListWidget):
     def addFiles(self, files, report):
         i = 0
         while i < files.count():
-            item = FileItem('', '', None)
+            item = FileItem('', '', None, None)
             file = files.item(i)
-            encrypted = self.encrypt_file(file.filename, file.key)
+            encrypted = self.encrypt_file(file.path, file.key)
             item.filename = (str(encrypted)[26:len(str(encrypted)) - 2])
+            item.path = item.filename
+            index = item.filename.rindex("/")
+            trnc_filename = item.filename[index+1:len(item.filename)]
+            item.filename = trnc_filename
             item.setText(item.filename)
             item.key = None
             item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
@@ -116,17 +131,16 @@ class FileList(QtGui.QListWidget):
 
     #Encryption algorithm for files
     def encrypt_file(self, file_name, symm_key):
+        #os.chdir(home + "\\" + "Documents")
         hash_key = SHA256.new()
         hash_key.update(symm_key)
         key_size16 = hash_key.digest()[0:16]
-        print(key_size16)
         try:
             fout = open(file_name + '.enc', 'wb')
 
             text = ''
             with open(file_name, 'rb') as f:
                 text = f.read()
-
 
             enc = AES.new(key_size16, AES.MODE_CFB, b'abcdefghijklmnop')
             final_string = enc.encrypt(text)
@@ -146,14 +160,11 @@ class FileList(QtGui.QListWidget):
 
     #Decryption algorithm for files
     def decrypt_file(self, file_name, symm_key):
-        if symm_key == None:
-            print("Do the thing.")
-            raise TypeError
+        #os.chdir(home + "\\" + "Documents")
         hash_key = SHA256.new()
         hash_key.update(symm_key)
         key_size16 = hash_key.digest()[0:16]
         key_size16.decode("Latin-1")
-        print(key_size16)
         totaltext = ''
         try:
             with open(file_name, 'rb') as f:
@@ -170,15 +181,24 @@ class FileList(QtGui.QListWidget):
             fout.write(plaintext)
             fout.close()
             return fout
+        except TypeError as ty:
+            self.errorMessage = ErrorWindow()
+            self.errorMessage.errorLabel.setText("Please download the file before decrypting.")
+            self.errorMessage.errorLabel.resize(self.errorMessage.errorLabel.sizeHint())
+            self.errorMessage.errorLabel.move(30, 75)
+            self.errorMessage.show()
         except FileNotFoundError as ex:
-            print(ex)
-            print("File not found.")
+            self.errorMessage = ErrorWindow()
+            self.errorMessage.errorLabel.setText("Please download the file before decrypting.")
+            self.errorMessage.errorLabel.resize(self.errorMessage.errorLabel.sizeHint())
+            self.errorMessage.errorLabel.move(30, 75)
+            self.errorMessage.show()
+            #print(ex)
+            #print("File not found.")
         except UnicodeDecodeError as ex:
             print("Unicode Decode Error.")
         except ValueError as ex:
             print("Invalid Key Provided.")
-        except TypeError as ty:
-            print("Do the thing.")
 
     #Decrypts all "checked" files from the report_list
     def decrypt_files(self, files):
@@ -189,7 +209,7 @@ class FileList(QtGui.QListWidget):
             same = False
             while j < self.count():
                 newName1 = files.item(i).text()[0:len(files.item(i).text())-4]
-                newName2 = self.item(j).text()[0:29] + self.item(j).text()[33:len(self.item(j).text())]
+                newName2 = self.item(j).text()[4:len(self.item(j).text())]
                 if newName1 == newName2:
                     same = True
                     break
@@ -198,8 +218,19 @@ class FileList(QtGui.QListWidget):
             if item.key == None and item.checkState() == QtCore.Qt.Checked:
                 break
             if item.checkState() == QtCore.Qt.Checked and not same:
-                decrypted = self.decrypt_file(item.text(), item.key)
-                self.addItem(str(decrypted)[26:len(str(decrypted))-2])
+                if item.path:
+                    decrypted = self.decrypt_file(item.path, item.key)
+                    filePath = str(decrypted)[26:len(str(decrypted))-2]
+                    index = filePath.rindex("/")
+                    newfileName = filePath[index+1:]
+                    newDecObj = FileItem(newfileName, item.key, None, filePath)
+                    self.addItem(newDecObj)
+                else:
+                    self.errorMessage = ErrorWindow()
+                    self.errorMessage.errorLabel.setText("Please download the file before decrypting.")
+                    self.errorMessage.errorLabel.resize(self.errorMessage.errorLabel.sizeHint())
+                    self.errorMessage.errorLabel.move(30, 75)
+                    self.errorMessage.show()
 
     """def raiseKeyError(self, window):
         incorrectKey = QtGui.QLabel("Please set the decryption key", window)
@@ -225,7 +256,7 @@ class FileList(QtGui.QListWidget):
     #Custom slot for when specific FileList is double clicked
     @pyqtSlot(QtGui.QListWidgetItem)
     def doubleClickedSlot(self, item):
-        os.startfile(item.text())
+        os.startfile(item.path)
 
     #Custom slot for when specific FileList is double clicked
     @pyqtSlot(QtGui.QListWidgetItem)
@@ -234,24 +265,29 @@ class FileList(QtGui.QListWidget):
 
     #Custom slot for when specific FileList is single clicked
     @pyqtSlot(QtGui.QListWidgetItem)
-    def singleClickedSlot(self, encFiles, sh_desc):
+    def singleClickedSlot(self, encFiles, l_desc):
         i = 0
         while i < encFiles.count():
             item = encFiles.item(i)
             if item != None:
                 encFiles.takeItem(i)
-        sh_desc.setText(self.currentItem().long_desc)
+        l_desc.setText(self.currentItem().long_desc)
         for x in self.currentItem().report_files:
-            print(isinstance(x, dict))
             if isinstance(x, dict):
+                print(x['docfile'])
+                index = x['docfile'].rindex("/")
+                name = x['docfile'][index+1:len(x['docfile'])]
+                print(name)
                 if x['name'] == "":
                     x['name'] = "Unnamed"
-                file = FileItem(x['name'], None, x['id'])
-                file.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-                file.setCheckState(QtCore.Qt.Unchecked)
-                encFiles.addItem(file)
+                if x['encrypted'] == True:
+                    file = FileItem(name, None, x['id'], None)
+                    file.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+                    file.setCheckState(QtCore.Qt.Unchecked)
+                    encFiles.addItem(file)
             else:
                 encFiles.addItem(x)
+
 
 #Main GUI window class
 class Window(QtGui.QMainWindow):
@@ -352,6 +388,15 @@ class Window(QtGui.QMainWindow):
         self.decList.connect(self.decList,SIGNAL("itemDoubleClicked(QListWidgetItem*)"),
                                 self.decList,SLOT("doubleClickedSlot(QListWidgetItem*)"))
         self.reportList.itemClicked.connect(lambda: self.reportList.singleClickedSlot(self.report_files, self.desc))
+        #self.report_files.itemClicked.connect(lambda: self.report_files.singleClickedSlot2(self.report_files.currentItem()))
+
+        self.searchBar = QtGui.QLineEdit(self)
+        self.searchBar.resize(220, 22)
+        self.searchBar.move(100, 525)
+        self.searchBtn = QtGui.QPushButton("Search", self)
+        self.searchBtn.resize(93, 22)
+        self.searchBtn.move(7, 525)
+        self.searchBtn.clicked.connect(self.findReport)
 
         #Populate FileLists with reports from server
         self.populate_reports()
@@ -362,12 +407,24 @@ class Window(QtGui.QMainWindow):
         file1.setCheckState(QtCore.Qt.Unchecked)
         self.report_files.addItem(file1)"""
 
+    def findReport(self):
+        j = 0
+        while j < self.reportList.count():
+            if self.reportList.item(j).text() == self.searchBar.text():
+                self.reportList.setCurrentItem(self.reportList.item(j))
+                self.reportList.singleClickedSlot(self.report_files, self.desc)
+                break
+            j += 1
+
     #Get all public reports and private reports associated with this user and input them into the GUI
     def populate_reports(self):
         r = requests.get(base_path + "standalone_report_list/" + str(self.username))
         report_list = r.json()
         for report in report_list:
-            report1 = Report(report['short_desc'], report['owner'], report['files'], report['long_desc'])
+            private = ""
+            if report['private'] == True:
+                private = " (Private: " + str(self.username) + ")"
+            report1 = Report(report['short_desc'] + private, report['owner'], report['files'], report['long_desc'])
             self.reportList.addItem(report1)
 
     #Exit application
@@ -378,7 +435,12 @@ class Window(QtGui.QMainWindow):
     def download_files(self):
         i = 0
         while i < self.report_files.count():
-            r = requests.get(base_path + "download/" + str(self.report_files.item(i).id))
+            r = requests.get(base_path + "download/" + str(self.report_files.item(i).id), stream=True)
+            self.report_files.item(i).path = home_file_path + "/Downloads" + "/" + self.report_files.item(i).filename
+            if not os.path.isfile(self.report_files.item(i).path):
+                with open(self.report_files.item(i).path, 'wb') as f:
+                    f.write(r.content)
+                print(self.report_files.item(i).path)
             i += 1
 
     #Open add file window for file encryption
@@ -414,68 +476,82 @@ class Window(QtGui.QMainWindow):
         self.decList.decrypt_files(self.report_files)
 
 
+#Class to create the window for input and storage of encryption/decryption keys
 class KeyInput(QtGui.QWidget):
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.resize(300, 200)
+
+        #Input line for encryption/decryption key
         self.key = QtGui.QLineEdit(self)
         self.key.resize(150, 22)
         self.key.move(80, 100)
+
         self.label = QtGui.QLabel("Please enter the public key.", self)
         self.label.resize(self.label.sizeHint())
         self.label.move(78, 75)
 
 
+#Class to create the window to take in files to be added and encrypted to reports
 class AddFileDialog(QtGui.QWidget):
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.resize(400, 600)
+
+        #FileList to store FileItems to be encrypted
         self.encFiles = FileList(self)
         self.encFiles.resize(300, 400)
         self.encFiles.move(50, 75)
 
+        #Push button to add all FileItems in encFiles to the selected reports's report_files
         self.addFilesBtn = QtGui.QPushButton("Add to Encrypted Files", self)
         self.addFilesBtn.resize(self.addFilesBtn.sizeHint())
         self.addFilesBtn.move(200, 485)
 
+        #Push button to select more files to be added to encFiles in a single use
         self.moreFilesBtn = QtGui.QPushButton("Upload Files", self)
         self.moreFilesBtn.resize(self.moreFilesBtn.sizeHint())
         self.moreFilesBtn.move(80, 485)
-        self.moreFilesBtn.clicked.connect(self.upload_files)
-        self.connect(self.encFiles, QtCore.SIGNAL("dropped"), self.pictureDropped)
+        self.moreFilesBtn.clicked.connect(self.add_to_report_files)
 
-    def pictureDropped(self, l):
-        for url in l:
-            if os.path.exists(url):
-                print(url)
-                icon = QtGui.QIcon(url)
-                pixmap = icon.pixmap(72, 72)
-                icon = QtGui.QIcon(pixmap)
-                item = QtGui.QListWidgetItem(url, self.encFiles)
-                item.setIcon(icon)
-                item.setStatusTip(url)
-
-    def upload_files(self):
+    #Select a file from local machine, set the encryption key, and add it to the encFiles list
+    def add_to_report_files(self):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Load File', '')
         if filename:
             self.keyIn = KeyInput()
             self.keyIn.show()
             self.keyIn.key.returnPressed.connect(lambda: self.create_enc_object(filename, self.keyIn.key.text(), self.keyIn))
 
+    #Takes in the selected file and the encryption key and stores them as a single object
     def create_enc_object(self, filename, key, keyIn):
-        fileIt = FileItem(filename, key, None)
+        index = filename.rindex("/")
+        trnc_filename = filename[index+1:len(filename)]
+        fileIt = FileItem(trnc_filename, key, None, filename)
         keyIn.close()
         self.encFiles.addItem(fileIt)
 
+
+#Class to create the window to tell the user when specific errors have been encountered
+class ErrorWindow(QtGui.QWidget):
+
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.resize(300,200)
+        self.errorLabel = QtGui.QLabel(self)
+        self.ok = QtGui.QPushButton("Okay", self)
+        self.ok.resize(self.ok.sizeHint())
+        self.ok.move(110, 100)
+        self.ok.clicked.connect(self.closeWindow)
+
+    #Closes the window
+    def closeWindow(self):
+        self.close()
+
+#Main method to run the application on startup
 if __name__ == "__main__":
-    #load_user_database("users.csv")
     app = QtGui.QApplication(sys.argv)
-    #w = Window()
-    #w.show()
     lg = LoginWindow()
     lg.show()
-    #k = KeyInput()
-    #k.show()
     sys.exit(app.exec_())

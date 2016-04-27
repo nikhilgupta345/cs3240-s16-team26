@@ -421,7 +421,9 @@ def view_report(request):
 
 def download_file(request, fid):
     file = RFile.objects.get(pk=fid)
-    fname = file.name
+    fname = file.docfile.name
+    print(fname)
+    print(file.docfile.file)
     response = HttpResponse(file.docfile, content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename=%s' % fname
     return response
