@@ -49,9 +49,7 @@
                 <div class="col-md-3" style="height:100%">
                   <span style="text-align: center">
                     <ul class="nav nav-pills nav-stacked">
-                        <li class="active"><a href="#view-reports" data-toggle="tab">View All Reports</a></li>
-                       <!-- SEARCH --> <li><a href="#search" data-toggle="tab">Search for a Report</a></li>
-                        <li><a href="#create-reports" data-toggle="tab">Create a Report</a></li>
+                        <li class="active"><a href="#reports" data-toggle="tab">Reports</a></li>
                         <li><a href="#manage-groups" data-toggle="tab">Manage Groups</a></li>
                         <li><a href="#messages" data-toggle="tab">Messages</a></li>
                         {% if is_manager %}
@@ -61,89 +59,136 @@
                   </span>
                 </div>
                 <div class="col-md-9" style="height:100%">
-                  <div class="tab-content" style="height:100%; overflow:auto">
-                    <div id="view-reports" class="tab-pane fade in active">
-                      <div class="container" style="height:100%; width:100%">
-                        <div class="row">
-                          <div class="col-sm-12">
-                            <h3>Reports</h3>
-                          </div>
-                        </div>
-                        <div class="row" style="height:100%; width:100%">
-                          <div class="col-sm-4">
-                            <div class="list-group">
-                              {% for report in short_desc %}
-                                <form action="/view_report/" class="view-report-form" method="POST">
-                                  {% csrf_token %}
-                                  <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}"/>{{report.short_desc}}
-                                {% if report.private %}
-                                  <span class="label label-default label-pill pull-sm-right">Private</span>
-                                {% endif %}
-                                </button>
-                                </form>
-                              {% endfor %}
+                  <div class="tab-content">
+                    <div id="reports" class="tab-pane fade in active">
+                      <ul class="nav nav-tabs">
+                          <li class="active"><a href="#view-reports" data-toggle="tab">View Reports</a></li>
+                          <li><a href="#create-reports" data-toggle="tab">Create a Report</a></li>
+                          <li><a href="#search-reports" data-toggle="tab">Search Reports</a></li>
+                      </ul>
+                      <div class="tab-content">
+                        <div id="view-reports" class="tab-pane active">
+                          <div class="container" style="height:100%; width:100%">
+                            <div class="row">
+                              <div class="col-sm-12">
+                                <h3>Reports</h3>
+                              </div>
+                            </div>
+                            <div class="row" style="height:100%; width:100%">
+                              <div class="col-sm-4">
+                                <div class="list-group">
+                                  {% for folder in folders_list %}
+                                    <div id="open-folder-button">
+                                      <form action="/open_folder/" class="open-folder-form" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="list-group-item" name="folder_name" id="folder_name" value="{{folder.name}}">
+                                          <span id="folder-glyph" class="glyphicon glyphicon-folder-close"></span> {{folder.name}}
+                                        </button>
+                                      </form>
+                                    </div>
+                                  {% endfor %}
+                                  {% for report in reports_list %}
+                                    <form action="/view_report/" class="view-report-form" method="POST">
+                                      {% csrf_token %}
+                                      <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}">{{report.short_desc}}
+                                    {% if report.private %}
+                                      <span class="label label-default label-pill pull-sm-right">Private</span>
+                                    {% endif %}
+                                    </button>
+                                    </form>
+                                  {% endfor %}
+                                  <form action="" class="create-folder-form" method="POST">
+                                    <button type="submit" class="list-group-item" name="create_folder" id="create_folder" value="Create Folder">
+                                      <span class="glyphicon glyphicon-plus"></span> Create Folder
+                                    </button>
+                                  </form>
+                                </div>
+                              </div>
+                              <div class="col-sm-8">
+                                <div id="viewreport-response"></div>
+                              </div>
                             </div>
                           </div>
-                          <div class="col-sm-8">
-                            <div id="viewreport-response"></div>
-                          </div>
                         </div>
-                      </div>
-                    </div>
-
-
-                    <div id="search" class="tab-pane fade">
-                      <h3>Search for Reports</h3>
-                        <form id="search-form" action="/search/" method="post">
-                            {% csrf_token %}
-                                <div class="form-group">
-
-                                    <input type="text" name="keyword" id="keyword" tabindex="1" class="form-control" placeholder="All Fields" value="">
-                                    <input type="text" name="search-report-name" id="search-report-name" tabindex="1" class="form-control" placeholder="Name" value="">
-                                    <input type="text" name="search-report-short-desc" id="search-report-short-desc" tabindex="1" class="form-control" placeholder="Short Description" value="">
-                                    <input type="submit" name="search-submit" id="search-submit" tabindex="1" class="form-control" value="Search" data-target="#search-results-table">
-                                </div>
-                        </form>
-
-                        <table class="table table-hover" id="search-results-table">
-                            <thead>
-                              <tr>
-                                  <th>Name</th>
-                                  <th>Short Description</th>
-                                  <th>FDA Signature (Link)</th>
-                                  <!--
-                                  <th>Name</th>
-                                  <th>Short Description</th>
-                                  <th>Owner</th>
-                                  <th>Date</th>
-                                  -->
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {% for result in search_results %}
-                                <tr>
-                                    <td> {{ result.name }} </td>
-                                    <td> {{ result.description }} </td>
-                                    <td><a href="{{ result.docfile.url }}">{{ result.docfile.name }}</a></td>
-                                </tr>
+                        <div id="create-reports" class="tab-pane">
+                          <h3>Create a Report</h3>
+                          <form action="/create_report/" method="POST" id="form-createreport" enctype="multipart/form-data">
+                          {% csrf_token %}
+                          <div class="form-group">
+                            <label for="short_desc">Name:</label><input type="text" name="short_desc" id="short_desc" maxlength="120" class="form-control" />
+                            <label for="long_desc">Description:</label><textarea name="long_desc" rows="8" id="long_desc" class="form-control"></textarea>
+                            <label for="folder">Folder:</label>
+                            <select name="folder" id="folder" class="form-control">
+                                <option selected="selected" value=""></option>
+                              {% for folder in folders_list %}
+                                <option value="{{ folder.name }}">{{ folder.name }}</option>
                               {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                            </select>
+                            <label for="private">Mark as private:</label><input type="checkbox" name="private" id="private" />
+                            <!-- File upload fields -->
+                            <p>{{ doc_form.non_field_errors }}</p>
 
+                            <p>{{ doc_form.docfile.label_tag }} {{ doc_form.docfile.help_text }}</p>
+                            <p>
+                                {{ doc_form.fname.label_tag }} {{ doc_form.fname.help_text }}
+                                {{ doc_form.fname.errors }}
+                                {{ doc_form.fname }}
+                            </p>
+                            <p>
+                                {{ doc_form.docfile.errors }}
+                                {{ doc_form.docfile }}
+                            </p>
+                            <p>
+                                {{ doc_form.encrypted.label_tag }} {{ doc_form.encrypted.help_text }}
+                                {{ doc_form.encrypted.errors }}
+                                {{ doc_form.encrypted }}
+                            </p>
+                            <input type="submit" value="Create Report" class="form-control btn btn-primary" />
+                          </div>
+                          </form>
+                        </div>
 
-                    <div id="create-reports" class="tab-pane fade">
-                      <h3>Create a Report</h3>
-                      <form action="/create_report/" method="POST" id="form-createreport">
-                      {% csrf_token %}
-                      <div class="form-group">
-                        <label for="short_desc">Name:</label><input type="text" name="short_desc" id="short_desc" maxlength="120" class="form-control" />
-                        <label for="long_desc">Description:</label><textarea name="long_desc" rows="8" id="long_desc" class="form-control"></textarea>
-                        <label for="private">Mark as private:</label><input type="checkbox" name="private" id="private" />
-                        <input type="submit" value="Create Report" class="form-control" />
+                          <div id="search" class="tab-pane fade">
+                            <h3>Search for Reports</h3>
+                            <form id="search-form" action="/search/" method="post">
+                                {% csrf_token %}
+                                    <div class="form-group">
+
+                                        <input type="text" name="keyword" id="keyword" tabindex="1" class="form-control" placeholder="All Fields" value="">
+                                        <input type="text" name="search-report-name" id="search-report-name" tabindex="1" class="form-control" placeholder="Name" value="">
+                                        <input type="text" name="search-report-short-desc" id="search-report-short-desc" tabindex="1" class="form-control" placeholder="Short Description" value="">
+                                        <input type="submit" name="search-submit" id="search-submit" tabindex="1" class="form-control" value="Search" data-target="#search-results-table">
+                                    </div>
+                            </form>
+
+                            <table class="table table-hover" id="search-results-table">
+                                <thead>
+                                  <tr>
+                                      <th>Name</th>
+                                      <th>Short Description</th>
+                                      <th>FDA Signature (Link)</th>
+                                      <!--
+                                      <th>Name</th>
+                                      <th>Short Description</th>
+                                      <th>Owner</th>
+                                      <th>Date</th>
+                                      -->
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {% for result in search_results %}
+                                    <tr>
+                                        <td> {{ result.name }} </td>
+                                        <td> {{ result.description }} </td>
+                                        <td><a href="{{ result.docfile.url }}">{{ result.docfile.name }}</a></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                          </div>
                       </div>
-                      </form>
                     </div>
+
                     <div id="manage-groups" class="tab-pane fade">
                       <table class="table table-hover" id="groups_table">
                         <thead>
@@ -211,7 +256,7 @@
                         <li><a href="#sendmessages" data-toggle="tab">Send Messages</a></li>
                       </ul>
                       <div class="tab-content">
-                        <div id="viewmessages" class="tab-pane">
+                        <div id="viewmessages" class="tab-pane active">
                           <div class="container">
                             {% for message in messages_list %}
                             <div class="row">
@@ -265,7 +310,9 @@
                     <div id="site-manager" class="tab-pane fade">
                       <ul class="nav nav-tabs">
                         <li class="active"><a href="#assign-manager" data-toggle="tab">Assign Managers</a></li>
-                        <li><a href="#manage-users" data-toggle="tab">Manage Users</a></li>
+                        <li><a href="#sitemanager-users" data-toggle="tab">Manage Users</a></li>
+                        <li><a href="#sitemanager-groups" data-toggle="tab">Manage Groups</a></li>
+                        <li><a href="#sitemanager-reports" data-toggle="tab">All Reports</a></li>
                       </ul>
                       <div class="tab-content">
                         <div id="assign-manager" class="tab-pane fade">
@@ -285,7 +332,7 @@
                             </div>
                           </form>
                         </div>
-                        <div id="manage-users" class="tab-pane fade">
+                        <div id="sitemanager-users" class="tab-pane fade">
                           <div id="manageusers-response"></div><br />
                           Current Users: <br/>
                           <div id="user-list">
@@ -294,6 +341,94 @@
                               <li> {{ user.username }} <a href="#" class="link-suspend" id="{{ user.username }}"> Suspend </a> <a href="#" class="link-restore" id="{{ user.username }}"> Restore </a></li>
                               {% endfor %}
                             </ul>
+                          </div>
+                        </div>
+                        <div id="sitemanager-groups" class="tab-pane fade">
+                          <br/>
+                          <table class="table table-hover" id="groups_table">
+                            <thead>
+                              <tr>
+                                <th>Group</th>
+                                <th>Number of Members</th>
+                                <th>User</th>
+                                <th>Add</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for g in groups %}
+                              <tr>
+                                <td>{{ g.group.name }}</td>
+                                <td class="td_num_users", id="td_num_users_{{ g.group.name }}">{{ g.num_users }}</td> 
+                                <td>
+                                  <select class="select_userbox" id="select_{{ g.group.name }}" style="width:100%">
+                                    <option />
+                                    {% for user in users_list %}
+                                      <option value="{{ user.username }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                  </select>
+                                </td>
+                                <td>
+                                  <button type="submit" class="btn btn-primary add_user_to_group_button" id="add_button_{{ g.group.name }}">Add User</button>
+                                </td>
+                              </tr>
+                              {% endfor %}
+                          </table>
+
+                      <!-- Trigger the modal with a button -->
+                          <button type="button" class="btn btn-info btn-md" data-toggle="modal" data-target="#sitemanager-create-group">Create New Group</button>
+                          <!-- Modal -->
+                          <div id="sitemanager-create-group" class="modal fade" role="dialog">
+                            <div class="modal-dialog">
+                              <!-- Modal content-->
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                  <h4 class="modal-title">Create a New Group</h4>
+                                </div>
+                                <div class="modal-body">
+                                  <div class="form-group">
+                                    <label for="group_name"><span class="glyphicon glyphicon-user"></span> Group Name</label>
+                                    <input type="text" class="form-control" id="group_name" placeholder="Enter the name of your group" autofocus>
+                                  </div>
+                                </div>
+                                <div class="modal-footer">
+                                  <div class="pull-left" id="create_group_response" style="text-align:left; color:red"></div>
+                                  <form role="form">
+                                    <button type="button" class="btn btn-default" id="create_group_cancel" data-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-default" id="sitemanager_create_group_button">Create</button>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div id="sitemanager-reports" class="tab-pane fade">
+                          <div class="container" style="height:100%; width:100%">
+                            <div class="row">
+                              <div class="col-sm-12">
+                                <h3>Reports</h3>
+                              </div>
+                            </div>
+                            <div class="row" style="height:100%; width:100%">
+                              <div class="col-sm-4">
+                                <div class="list-group">
+                                  {% for report in all_reports %}
+                                    <form action="/view_report/" class="sitemanager-view-report-form" method="POST">
+                                      {% csrf_token %}
+                                      <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}"/>{{report.short_desc}}
+                                    {% if report.private %}
+                                      <span class="label label-default label-pill pull-right">Private</span>
+                                    {% endif %}
+                                    </button>
+                                    </form>
+                                  {% endfor %}
+                                </div>
+                              </div>
+                              <div class="col-sm-8">
+                                <div id="sitemanager-viewreport-response"></div>
+                                <div id="sitemanager-viewreport-delete"></div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

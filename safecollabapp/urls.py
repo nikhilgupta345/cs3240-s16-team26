@@ -19,4 +19,13 @@ urlpatterns = [
     url(r'^list/$', views.list, name='list'),
     url(r'^create_report/$', views.create_report, name='Create Report'),
     url(r'^view_report/$', views.view_report, name='View Report'),
+    url(r'^delete_report/$', views.delete_report, name='Delete Report'),
+    url(r'^edit_report/$', views.edit_report, name='Edit Report'),
+    url(r'^create_folder/$', views.create_folder, name='Create Folder'),
+    url(r'^submit_folder/$', views.submit_folder, name='Submit Folder'),
+    url(r'^open_folder/$', views.open_folder, name='Open Folder'),
+    url(r'^close_folder/$', views.close_folder, name='Close Folder'),
+    url(r'^sm_delete_report/$', views.sm_delete_report, name='SM Delete Report'),
+    url(r'^download/(?P<fid>.*)$', views.download_file, name='Download File'),
+    url(r'^standalone_report_list/(?P<username>\w+)$', views.standalone_report_list.as_view(), name='Standalone Report List'),
 ]
