@@ -88,7 +88,7 @@
                                       </form>
                                     </div>
                                   {% endfor %}
-                                  {% for report in reports_list %}
+                                  {% for report in reports_list %} <!--May need to change this-->
                                     <form action="/view_report/" class="view-report-form" method="POST">
                                       {% csrf_token %}
                                       <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}">{{report.short_desc}}
@@ -445,7 +445,7 @@
                             <div class="row" style="height:100%; width:100%">
                               <div class="col-sm-4">
                                 <div class="list-group">
-                                  {% for report in all_reports %}
+                                  {% for report in all_reports %} <!--May need to fix this as well-->
                                     <form action="/view_report/" class="sitemanager-view-report-form" method="POST">
                                       {% csrf_token %}
                                       <button type="submit" class="list-group-item" name="report_name" id="report_name" value="{{report.short_desc}}"/>{{report.short_desc}}

@@ -21,6 +21,8 @@ TEMPLATE_PATH = os.path.join(BASE_DIR, 'templates')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+#DATABASE_URL = "postgres://awndelqyqukkhw:fjwnXJZI-kycejxLmTb9wnx1eh@ec2-54-235-93-178.compute-1.amazonaws.com:5432/d29465clrn1cfv"
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -86,21 +88,45 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+<<<<<<< HEAD
 }
 """
+
+
 # This is the configuration for PostgreSQL
-DATABASES = {
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'testdb',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
+}"""
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'd29465clrn1cfv',
+        'HOST': 'ec2-54-235-93-178.compute-1.amazonaws.com',
+        'PORT': '5432',
+        'USER': 'awndelqyqukkhw',
+        'PASSWORD': 'fjwnXJZI-kycejxLmTb9wnx1eh',
+    }
 }
 
+print(os.environ.get('DATABASE_URL'))
+
+if os.environ.get('DATABASE_URL'):
+    db_from_env = dj_database_url.config(conn_max_age=500)
+    DATABASES['default'].update(db_from_env)
+
+
+"""
 # Extra DB configuration for Heroku
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
+"""
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
