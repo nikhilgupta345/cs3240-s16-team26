@@ -645,6 +645,7 @@ def get_reports(user):
 
     return reports
     #return Report.objects.filter(owner=user, folder=None)
+    return Report.objects.filter(owner=user, folder_id=None)
 
 def get_folders(user):
     return Folder.objects.filter(owner=user)
@@ -759,6 +760,35 @@ def download_file(request, fid):
     response = HttpResponse(file.docfile, content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename=%s' % fname
     return response
+
+def standalone_login(request, username, password):
+    #if request.method == 'POST':
+    context_dict = {'response': ''}
+    print(username)
+    print(password)
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        if user.is_active:
+            print("congrats")
+            response = HttpResponse(content='True')
+            print(response.content)
+            return response
+    else:
+        return HttpResponse(content='False')
+
+    """if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            # the password verified for the user
+            if user.is_active:
+                print("Yay")
+                request.session['username'] = username
+                return HttpResponse(content='True')
+        else:
+            print("Not yay")
+            return HttpResponse(content='False')"""
 
 #@permission_classes(isAuthenticated)
 class standalone_report_list(APIView):
