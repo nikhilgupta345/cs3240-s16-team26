@@ -10,7 +10,6 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 import requests
 from os.path import expanduser
 import copy
-from django.middleware.csrf import get_token
 
 ####This part is to get the standAlone to access our Django Project####
 
@@ -60,22 +59,15 @@ class LoginWindow(QtGui.QWidget):
     def login(self):
         username = self.userName.text()
         password = self.password.text()
-        #data = {'X-CSRFToken': get_token(),
-               #'username': username,
-                #'password': password}
-        #csrf_token = get_token(request=requests.post(base_path + "standalone_login/", data=data))
-        #r = requests.post(base_path + "standalone_login/", data=data)
-        #print(requests.post(base_path + "standalone_login/", data=data))
-        #print(r)
-        r = requests.get(base_path + "standalone_login/" + username + "/" + password + "/")
+        data = {'username': username,
+                'password': password}
+        r = requests.post(base_path + "standalone_login/", data=data)
         print(r)
         if r.content == b'True':
-            print("yay")
             self.mainWindow = Window(username)
             self.mainWindow.show()
             self.close()
         else:
-            print("not yay")
             incorrect = QtGui.QLabel("Invalid username or password. Please try again.", self)
             incorrect.resize(incorrect.sizeHint())
             incorrect.move(170, 270)
