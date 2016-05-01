@@ -383,7 +383,7 @@
                                 <th>Group</th>
                                 <th>Number of Members</th>
                                 <th>User</th>
-                                <th>Add</th>
+                                <th>Add/Remove</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -400,7 +400,8 @@
                                   </select>
                                 </td>
                                 <td>
-                                  <button type="submit" class="btn btn-primary sm_add_user_to_group_button" id="sm_add_button_{{ g.group.name }}">Add User</button>
+                                  <button type="submit" class="btn btn-primary sm_add_user_to_group_button" id="sm_add_button_{{ g.group.name }}">Add</button>
+                                  <button type="submit" class="btn btn-danger sm_remove_user_from_group_button" id="sm_remove_button_{{ g.group.name }}">Remove</button>
                                 </td>
                               </tr>
                               {% endfor %}

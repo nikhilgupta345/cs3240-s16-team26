@@ -41,7 +41,54 @@ $(document).ready(function() {
       });
   });
 
-  /* Add user to a group */
+  /* Remove user from a group using SM */
+  $('tbody').on('click', '.sm_remove_user_from_group_button', function(event) {
+    event.preventDefault();
+    id = event.target.id;
+
+    // ID is of form add_button_{{ group.name }}, so we need to get group name
+    group_name = id.substring(17);
+    username = $('#sm_select_' + group_name).val();
+    console.log(username);
+    console.log(group_name);
+
+    data_dict = {
+      'group_name': group_name,
+      'username':username
+    }
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/remove_user_from_group/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        if(json['response'] != '') { // User unsuccessfully added to groupo
+          $.notify(json['response'], "error");
+        } else {
+          $.notify('User successfully removed!', "success");
+          var sm_td_num_users = $('#sm_td_num_users_' + group_name)[0];
+          var cur_users = parseInt(sm_td_num_users.innerHTML);
+          sm_td_num_users.innerHTML = cur_users - 1 // Change num_users in the table by 1
+        }
+      },
+
+      error: function(xhr, errmsg, err) {
+        $.notify('Error removing this user.', "error");
+        console.log('error');
+      }
+    })
+  })
+
+  /* Add user to a group using SM */
   $('tbody').on('click', '.sm_add_user_to_group_button', function(event) {
     event.preventDefault();
     id = event.target.id;

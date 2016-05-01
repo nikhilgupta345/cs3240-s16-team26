@@ -12,6 +12,7 @@ urlpatterns = [
     url(r'^create_group/$', views.create_group, name='Create a Group'),
     url(r'^sm_create_group/$', views.sm_create_group, name='SM Create Group'),
     url(r'^add_user_to_group/$', views.add_user_to_group, name='Add a User to a Group'),
+    url(r'^remove_user_from_group/$', views.remove_user_from_group, name='Remove a User from a Group'),
     url(r'^index/$', views.index, name='index'),
     url(r'^recover_password/$', views.recover_password, name='Recover Password'),
     url(r'^messages/$', views.messages, name='Private Messages'),

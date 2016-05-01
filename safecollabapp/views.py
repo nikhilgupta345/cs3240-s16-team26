@@ -216,6 +216,30 @@ def is_manager(user):
 def get_managers():
     return User.objects.filter(groups__name='site-manager')
 
+def remove_user_from_group(request):
+    if request.method == "POST":
+        context_dict = {
+            'response': ''
+        }
+
+        group_name = request.POST.get('group_name')
+        username = request.POST.get('username')
+
+        g = Group.objects.get(name=group_name)
+        try:
+            print(username)
+            user = User.objects.get(username=username)
+            if user not in g.user_set.all():
+                context_dict['response'] = 'User not in group!'
+            else:
+                user.groups.remove(g)
+        except:
+            context_dict['response'] = 'Invalid User!'
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    else:
+        return redirect('/index/')
+
 def add_user_to_group(request):
     if request.method == "POST":
         context_dict = {
