@@ -94,16 +94,16 @@ DATABASES = {
 
 
 # This is the configuration for PostgreSQL
-"""DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'testdb',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
-}"""
+}
 
-DATABASES = {
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'd29465clrn1cfv',
@@ -112,9 +112,7 @@ DATABASES = {
         'USER': 'awndelqyqukkhw',
         'PASSWORD': 'fjwnXJZI-kycejxLmTb9wnx1eh',
     }
-}
-
-print(os.environ.get('DATABASE_URL'))
+}"""
 
 if os.environ.get('DATABASE_URL'):
     db_from_env = dj_database_url.config(conn_max_age=500)
