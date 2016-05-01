@@ -535,11 +535,12 @@ def create_report(request):
         short_desc = request.POST.get('short_desc')
         long_desc = request.POST.get('long_desc')
         private = request.POST.get('private') is not None # is the box checked?
+        group = request.POST.get('group')
         file_name = request.POST.get('fname')
         encrypted = request.POST.get('encrypted') is not None # is the box checked?
         file_form = DocumentForm(request.POST, request.FILES)
 
-        new_report = Report(owner = owner, short_desc = short_desc, long_desc = long_desc, private = private)
+        new_report = Report(owner = owner, short_desc = short_desc, long_desc = long_desc, private = private, group = group)
 
         # Get folder if applicable
         folder_name = request.POST.get('folder')
@@ -558,7 +559,23 @@ def create_report(request):
     return redirect('/index/')
 
 def get_reports(user):
-    return Report.objects.filter(owner=user, folder=None)
+    reports = []
+    for report in Report.objects.all():
+        if report.owner == user and report.folder != None:
+            continue
+            
+        if report.group == '' or report.group == 'Public':
+            print('Public.')
+            reports.append(report)
+        else:
+            group = Group.objects.get(name=report.group)
+            if group in user.groups.all():
+                print('Name: ' + group.name)
+                print(user.groups.all())
+                reports.append(report)
+
+    return reports
+    #return Report.objects.filter(owner=user, folder=None)
 
 def get_folders(user):
     return Folder.objects.filter(owner=user)

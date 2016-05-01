@@ -126,6 +126,12 @@
                               {% endfor %}
                             </select>
                             <label for="private">Mark as private:</label><input type="checkbox" name="private" id="private" />
+                            <select name="group" id="group" class="group-control">
+                                <option selected="selected" value=""></option>
+                              {% for g in groups %}
+                                <option value="{{ g.group.name }}">{{ g.group.name }}</option>
+                              {% endfor %}
+                            </select>
                             <!-- File upload fields -->
                             <p>{{ doc_form.non_field_errors }}</p>
 

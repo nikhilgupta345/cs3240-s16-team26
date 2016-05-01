@@ -27,6 +27,7 @@ class Report(models.Model):
     short_desc = models.CharField(max_length=120) # short description
     long_desc = models.TextField() # long description
     private = models.BooleanField(default=False)
+    group = models.CharField(max_length=120, default='Public')
     # files are handled in the RFile class
 
 # helper functions to generate paths for reports and documents
