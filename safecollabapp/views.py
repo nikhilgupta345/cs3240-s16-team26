@@ -242,6 +242,40 @@ def add_user_to_group(request):
 
 def create_group(request):
     if request.method == 'POST': # Check if they submitted the form to create a new group
+        name = request.POST.get('sm_group_name') # Get the group name that they wish to add
+        context_dict = {
+            'response' : '',
+            'usernames': [],
+        }
+
+        users = User.objects.all()
+        for user in users:
+            context_dict['usernames'].append(user.username)
+
+
+        if len(name) == 0:
+            context_dict['response'] = 'You must enter a group name.'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+        elif ' ' in name:
+            context_dict['response'] = 'You cannot have spaces in your group name.'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+        try:
+            g = Group.objects.get(name=name)
+
+            context_dict['response'] = 'There is already a group on the site with that name!'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+        except:                
+            g = Group(name=name)
+            g.save()    
+            request.user.groups.add(g)
+
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+
+    else:
+        return redirect('/index/')
+
+def sm_create_group(request):
+    if request.method == 'POST': # Check if they submitted the form to create a new group
         name = request.POST.get('group_name') # Get the group name that they wish to add
         context_dict = {
             'response' : '',
@@ -256,6 +290,9 @@ def create_group(request):
         if len(name) == 0:
             context_dict['response'] = 'You must enter a group name.'
             return HttpResponse(json.dumps(context_dict), content_type="application/json")
+        elif ' ' in name:
+            context_dict['response'] = 'You cannot have spaces in your group name.'
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
 
         try:
             g = Group.objects.get(name=name)
@@ -265,7 +302,6 @@ def create_group(request):
         except:                
             g = Group(name=name)
             g.save()    
-            request.user.groups.add(g)
 
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
 
@@ -366,6 +402,14 @@ def index(request):
             'num_users':len(group.user_set.all())
         })
 
+    all_group_info = []
+    all_groups = Group.objects.exclude(name='site-manager')
+
+    for group in all_groups:
+        all_group_info.append({
+            'group':group,
+            'num_users':len(group.user_set.all())
+        })
 
     context_dict = {
         'is_manager': is_manager(request.user), # Is this user a manager?
@@ -377,6 +421,7 @@ def index(request):
         'reports_list' : get_reports(request.user),
         'all_reports': Report.objects.all(),
         'groups' : group_info,
+        'all_groups' : all_group_info,
         'doc_form' : DocumentForm(),
     }
 
