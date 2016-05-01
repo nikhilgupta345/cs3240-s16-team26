@@ -19,7 +19,7 @@ class Folder(models.Model):
 
 class Report(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
-    folder = models.ForeignKey(Folder, on_delete=models.CASCADE, null=True, related_name='+')
+    folder_id = models.ForeignKey(Folder, on_delete=models.CASCADE, null=True, related_name='+')
     time = models.DateTimeField(auto_now_add=True) # timestamp
     short_desc = models.CharField(max_length=120) # short description
     long_desc = models.TextField() # long description
