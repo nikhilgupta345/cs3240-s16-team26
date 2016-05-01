@@ -373,6 +373,7 @@ def index(request):
         'users_list' : User.objects.all(),
         'messages_list' : get_messages(request.user),
         'folders_list' : get_folders(request.user),
+        'files_list' : get_files(request.user),
         'reports_list' : get_reports(request.user),
         'all_reports': Report.objects.all(),
         'groups' : group_info,
@@ -562,6 +563,9 @@ def get_reports(user):
 def get_folders(user):
     return Folder.objects.filter(owner=user)
 
+def get_files(user):
+    return RFile.objects.filter(owner=user, encrypted=False)
+
 def view_report(request):
     if request.method == 'POST':
         context_dict = {'short_desc' : ''}
@@ -580,6 +584,22 @@ def view_report(request):
 def delete_report(request):
     if request.method == 'POST':
         reports = Report.objects.filter(owner=request.user, short_desc = request.POST.get('report_name')).delete()
+
+        return redirect('/index/')
+    return redirect('/index/')
+
+def view_file(request):
+    if request.method == 'POST':
+        context_dict = {'file_name' : '', 'report_name' : ''}
+        rfile = RFile.objects.filter(name = request.POST.get('file_name'))[0]
+        context_dict['file_name'] = rfile.name
+        context_dict['report_name'] = rfile.report.short_desc
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')
+
+def delete_file(request):
+    if request.method == 'POST':
+        files = RFile.objects.filter(owner=request.user, name = request.POST.get('file_name')).delete()
 
         return redirect('/index/')
     return redirect('/index/')
@@ -614,6 +634,26 @@ def open_folder(request):
 
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
 
+    return redirect('/index/')
+
+def edit_folder(request):
+    if request.method == 'POST':
+        folder = Folder.objects.filter(name = request.POST.get('original_name'))[0]
+        folder.name = request.POST.get('new_name')
+        folder.save()
+    return redirect('/index/')
+
+def delete_folder(request):
+    if request.method == 'POST':
+        folders = Folder.objects.filter(owner=request.user, name = request.POST.get('folder_name'))
+        for folder in folders:
+            reports = Report.objects.filter(owner=request.user, folder=folder)
+            for report in reports:
+                report.folder = None
+                report.save()
+        folders.delete()
+
+        return redirect('/index/')
     return redirect('/index/')
 
 def sm_delete_report(request):

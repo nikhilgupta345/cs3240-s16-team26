@@ -431,6 +431,92 @@ $(document).ready(function() {
               '</button></form>'
               );
 
+          $('#viewreport-response').html(
+              '<h3>' + folder_name + '</h3>' +
+              '<p><form action="" class="begin-edit-folder-form" method="POST">' +
+              '<input type="hidden" name="folder_name" value="' + folder_name + '" />' +
+              '<input type="submit" value="Edit folder" class="btn btn-primary" /></form></p>' +
+              '<p><form action="/delete_folder/" class="delete-folder-form" method="POST">' +
+              '<input type="hidden" name="folder_name" value="' + folder_name + '" />' +
+              '<input type="submit" value="Delete folder" class="btn btn-danger" /></form></p>'
+              );
+
+          $('form.delete-folder-form').on('submit', function(event) {
+            event.preventDefault();
+            csrftoken = getCookie('csrftoken');
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+
+            var delete_dict = {
+              'folder_name' : folder_name,
+            };
+
+            $.ajax({
+              url: "/delete_folder/",
+              type: "POST",
+              data: delete_dict,
+
+              success: function(json) {
+                window.location.href="/index/";
+              },
+
+              error: function(xhr, errmsg, err) {
+                console.log('error');
+              }
+            });
+            
+          });
+
+          $('form.begin-edit-folder-form').on('submit', function(event) {
+              event.preventDefault();
+              $('#viewreport-response').html(
+                '<div class="form-group">' +
+                '<form action="/edit_folder/" class="edit-folder-form" method="POST">' +
+                '<input type="text" id="folder_name" name="folder_name" class="form-control" value="' + folder_name + '" />' +
+                '<input type="submit" value="Save Changes" class="form-control btn btn-primary" />' +
+                '</form></div>'
+                  );
+
+              $('form.edit-folder-form').on('submit', function(event) {
+                event.preventDefault();
+                var form = $(event.target);
+                new_name = form.find('#folder_name').val();
+
+                var edit_dict = {
+                  'original_name' : folder_name, // we get this for free via closure
+                  'new_name' : new_name,
+                };
+
+                csrftoken = getCookie('csrftoken');
+                $.ajaxSetup({
+                    beforeSend: function(xhr, settings) {
+                        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                        }
+                    }
+                });
+
+                $.ajax({
+                  url: "/edit_folder/",
+                  type: "POST",
+                  data: edit_dict,
+
+                  success: function(json) {
+                    window.location.href="/index/";
+                  },
+
+                  error: function(xhr, errmsg, err) {
+                    console.log('error');
+                  }
+                });
+                
+              });
+          });
           closeFolder();
 
           // For each report returned in the json object, append a new form object
@@ -589,6 +675,76 @@ $(document).ready(function() {
   };
   updateForms();
 
+  $('form.view-file-form').on('submit', function(event) {
+    event.preventDefault();
+
+    var form = $(event.target);
+    fileName = form.find('#file_name').val();
+
+    data_dict = {
+      'file_name' : fileName,
+    };
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/view_file/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        $('#viewfile-response').html(
+            '<h3>' + json['file_name'] + '</h3>' +
+            '<h4><em>Report: </em>' + json['report_name'] + '</h4>' +
+            '<p><form action="/delete_file/" class="delete-file-form" method="POST">' +
+            '<input type="hidden" name="file_name" value="' + json['file_name'] + '" />' +
+            '<input type="submit" value="Delete file" class="btn btn-danger" /></form></p>'
+            );
+
+        $('form.delete-file-form').on('submit', function(event) {
+          event.preventDefault();
+          csrftoken = getCookie('csrftoken');
+          $.ajaxSetup({
+              beforeSend: function(xhr, settings) {
+                  if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                      xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                  }
+              }
+          });
+
+          var delete_dict = {
+            'file_name' : fileName,
+          };
+
+          $.ajax({
+            url: "/delete_file/",
+            type: "POST",
+            data: delete_dict,
+
+            success: function(json) {
+              window.location.href="/index/";
+            },
+
+            error: function(xhr, errmsg, err) {
+              console.log('error');
+            }
+          });
+          
+        });
+
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    });
+  });
   /* view a report */
   $('form.sitemanager-view-report-form').on('submit', function(event) {
     event.preventDefault();
