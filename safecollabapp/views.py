@@ -633,8 +633,7 @@ def get_reports(user):
         if report.owner == user and report.folder != None:
             continue
             
-        if report.group == '' or report.group == 'Public':
-            print('Public.')
+        if report.owner == user: # Show a report to the owner of it
             reports.append(report)
         else:
             group = Group.objects.get(name=report.group)

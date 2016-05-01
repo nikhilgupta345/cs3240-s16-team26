@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-  $('search-form').on('submit', function(event) {
+  $('#search-form').on('submit', function(event) {
       event.preventDefault();
 
       csrftoken = getCookie('csrftoken');
@@ -312,7 +312,7 @@ $(document).ready(function() {
   $('#form-addmanager').on('submit', function(event) {
     event.preventDefault();
 
-    username = $('#username').val()
+    username = $('#add_manager_username').val()
 
     data_dict = {
       'username': username
@@ -332,11 +332,12 @@ $(document).ready(function() {
       data: data_dict,
 
       success: function(json) {
-        if(json['response'].contains('Successful')) {
+        if(json['response'].indexOf('Successful') > -1) {
             $('#manager-list ul').append('<li>' + username + '</li>');
         }
         
         $('#addmanager-response').text(json['response']);
+        $('#add_manager-username').text('');
 
       },
 
