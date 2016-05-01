@@ -771,6 +771,7 @@ def standalone_login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
+        print("Connected")
         if user is not None:
             # the password verified for the user
             if user.is_active:

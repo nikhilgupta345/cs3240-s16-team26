@@ -10,7 +10,6 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 import requests
 from os.path import expanduser
 import copy
-from django.middleware.csrf import get_token
 
 ####This part is to get the standAlone to access our Django Project####
 
@@ -20,9 +19,9 @@ application = get_wsgi_application()
 
 fs = FileSystemStorage(location = '/media/')
 
-base_path = "http://127.0.0.1:8000/"
+#base_path = "http://127.0.0.1:8000/"
 
-#base_path = "http://damp-sierra-38619.herokuapp.com/"
+base_path = "http://damp-sierra-38619.herokuapp.com/"
 
 home = expanduser("~")
 home_file_path = copy.deepcopy(home)
@@ -63,6 +62,7 @@ class LoginWindow(QtGui.QWidget):
         data = {'username': username,
                 'password': password}
         r = requests.post(base_path + "standalone_login/", data=data)
+        print(r)
         if r.content == b'True':
             self.mainWindow = Window(username)
             self.mainWindow.show()
