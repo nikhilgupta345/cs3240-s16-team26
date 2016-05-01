@@ -560,6 +560,9 @@ def create_report(request):
 def get_reports(user):
     reports = []
     for report in Report.objects.all():
+        if report.owner == user and report.folder != None:
+            continue
+            
         if report.group == '' or report.group == 'Public':
             print('Public.')
             reports.append(report)
