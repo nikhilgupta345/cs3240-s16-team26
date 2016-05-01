@@ -225,7 +225,8 @@ $(document).ready(function() {
           console.log(json['usernames'])
 
           new_row += '</select>';
-          new_row += '</td><td><button type="submit" class="btn btn-primary sm_add_user_to_group_button" id="sm_add_button_' + name + '">' + 'Add User</button></td>'
+          new_row += '</td><td><button type="submit" class="btn btn-primary sm_add_user_to_group_button" id="sm_add_button_' + name + '">' + 'Add </button><'
+          new_row += '<button type="submit" class="btn btn-danger sm_remove_user_from_group_button" id="sm_remove_button_' + name + '">' + 'Remove</button></td>'
           new_row += '</tr>'
           $('#sm_groups_table').append(new_row)
 
@@ -299,6 +300,9 @@ $(document).ready(function() {
 
           $('#group_name').val('');
           $('#create_group_response').text('');
+
+          // Add the new group to the option for creating a report
+          $('#group').append('<option value="' + name + '">' + name + '</option>');
         }
       },
 
