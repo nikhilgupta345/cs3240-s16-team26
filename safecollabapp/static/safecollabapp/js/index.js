@@ -240,7 +240,8 @@ $(document).ready(function() {
           console.log(json['usernames'])
 
           new_row += '</select>';
-          new_row += '</td><td><button type="submit" class="btn btn-primary sm_add_user_to_group_button" id="sm_add_button_' + name + '">' + 'Add User</button></td>'
+          new_row += '</td><td><button type="submit" class="btn btn-primary sm_add_user_to_group_button" id="sm_add_button_' + name + '">' + 'Add </button><'
+          new_row += '<button type="submit" class="btn btn-danger sm_remove_user_from_group_button" id="sm_remove_button_' + name + '">' + 'Remove</button></td>'
           new_row += '</tr>'
           $('#sm_groups_table').append(new_row)
 
@@ -314,6 +315,9 @@ $(document).ready(function() {
 
           $('#group_name').val('');
           $('#create_group_response').text('');
+
+          // Add the new group to the option for creating a report
+          $('#group').append('<option value="' + name + '">' + name + '</option>');
         }
       },
 
@@ -327,7 +331,7 @@ $(document).ready(function() {
   $('#form-addmanager').on('submit', function(event) {
     event.preventDefault();
 
-    username = $('#username').val()
+    username = $('#add_manager_username').val()
 
     data_dict = {
       'username': username
@@ -347,11 +351,12 @@ $(document).ready(function() {
       data: data_dict,
 
       success: function(json) {
-        if(json['response'].contains('Successful')) {
+        if(json['response'].indexOf('Successful') > -1) {
             $('#manager-list ul').append('<li>' + username + '</li>');
         }
         
         $('#addmanager-response').text(json['response']);
+        $('#add_manager-username').text('');
 
       },
 
@@ -684,13 +689,15 @@ $(document).ready(function() {
               '<h3>' + json['short_desc'] + '</h3>' +
               '<h4>' + json['time'] + '</h4>' +
               '<p>' + json['long_desc'] + '</p>' +
-              '<p>' + json['file_name'] + '</p>' +
+              '<p><em>File:</em> ' + json['file_name'] + '</p>' +
+              (json['is_owner'] ? 
               '<p><form action="" class="begin-edit-report-form" method="POST">' +
               '<input type="hidden" name="report_name" value="' + json['short_desc'] + '" />' +
               '<input type="submit" value="Edit Report" class="btn btn-primary" /></form></p>' +
               '<p><form action="/delete_report/" class="delete-report-form" method="POST">' +
               '<input type="hidden" name="report_name" value="' + json['short_desc'] + '" />' +
               '<input type="submit" value="Delete Report" class="btn btn-danger" /></form></p>'
+              : '')
               );
 
           $('form.delete-report-form').on('submit', function(event) {
@@ -811,6 +818,7 @@ $(document).ready(function() {
         $('#viewfile-response').html(
             '<h3>' + json['file_name'] + '</h3>' +
             '<h4><em>Report: </em>' + json['report_name'] + '</h4>' +
+            '<p><a href="/download/' + json['file_id'] + '"><button class="btn btn-primary">Download</button></a></p>' +
             '<p><form action="/delete_file/" class="delete-file-form" method="POST">' +
             '<input type="hidden" name="file_name" value="' + json['file_name'] + '" />' +
             '<input type="submit" value="Delete file" class="btn btn-danger" /></form></p>'

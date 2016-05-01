@@ -34,6 +34,7 @@ from safecollabapp.serializers import RFile_Serializer, Report_Serializer
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
 
 
 def list(request):
@@ -264,7 +265,7 @@ def add_user_to_group(request):
 
 def create_group(request):
     if request.method == 'POST': # Check if they submitted the form to create a new group
-        name = request.POST.get('sm_group_name') # Get the group name that they wish to add
+        name = request.POST.get('group_name') # Get the group name that they wish to add
         context_dict = {
             'response' : '',
             'usernames': [],
@@ -613,7 +614,7 @@ def create_report(request):
         folder_name = request.POST.get('folder')
         if folder_name != '':
             folder = Folder.objects.filter(owner=owner, name=folder_name)[0]
-            new_report.folder = folder
+            new_report.folder_id = folder
 
         # save new report
         new_report.save()
@@ -628,12 +629,13 @@ def create_report(request):
 def get_reports(user):
     reports = []
     for report in Report.objects.all():
-        if report.owner == user and report.folder != None:
+        if report.owner == user and report.folder_id != None:
             continue
             
-        if report.group == '' or report.group == 'Public':
-            print('Public.')
+        if report.owner == user: # Show a report to the owner of it
             reports.append(report)
+        elif report.group == '' or report.group == 'Public':
+            continue
         else:
             group = Group.objects.get(name=report.group)
             if group in user.groups.all():
@@ -659,6 +661,7 @@ def view_report(request):
         context_dict['long_desc'] = report.long_desc
         context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
         context_dict['owner'] = report.owner.username
+        context_dict['is_owner'] = (report.owner == request.user)
         context_dict['file_name'] = 'No files associated with report.'
         files = RFile.objects.filter(report=report)
         for file in files:
@@ -679,6 +682,7 @@ def view_file(request):
         rfile = RFile.objects.filter(name = request.POST.get('file_name'))[0]
         context_dict['file_name'] = rfile.name
         context_dict['report_name'] = rfile.report.short_desc
+        context_dict['file_id'] = rfile.id
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     return redirect('/index/')
 
@@ -711,7 +715,7 @@ def open_folder(request):
     if request.method == 'POST':
         folder_name = request.POST.get('folder_name')
         folder = Folder.objects.filter(owner=request.user, name=folder_name)[0]
-        reports = Report.objects.filter(owner=request.user, folder=folder)
+        reports = Report.objects.filter(owner=request.user, folder_id=folder)
 
         context_dict = {'reports' : []}
         for report in reports:
@@ -732,9 +736,9 @@ def delete_folder(request):
     if request.method == 'POST':
         folders = Folder.objects.filter(owner=request.user, name = request.POST.get('folder_name'))
         for folder in folders:
-            reports = Report.objects.filter(owner=request.user, folder=folder)
+            reports = Report.objects.filter(owner=request.user, folder_id=folder)
             for report in reports:
-                report.folder = None
+                report.folder_id = None
                 report.save()
         folders.delete()
 
@@ -759,25 +763,13 @@ def download_file(request, fid):
     response['Content-Disposition'] = 'attachment; filename=%s' % fname
     return response
 
-def standalone_login(request, username, password):
-    #if request.method == 'POST':
-    context_dict = {'response': ''}
-    print(username)
-    print(password)
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        if user.is_active:
-            print("congrats")
-            response = HttpResponse(content='True')
-            print(response.content)
-            return response
-    else:
-        return HttpResponse(content='False')
-
-    """if request.method == 'POST':
+@csrf_exempt
+def standalone_login(request):
+    if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
+        print("Connected")
         if user is not None:
             # the password verified for the user
             if user.is_active:
@@ -786,7 +778,7 @@ def standalone_login(request, username, password):
                 return HttpResponse(content='True')
         else:
             print("Not yay")
-            return HttpResponse(content='False')"""
+            return HttpResponse(content='False')
 
 #@permission_classes(isAuthenticated)
 class standalone_report_list(APIView):

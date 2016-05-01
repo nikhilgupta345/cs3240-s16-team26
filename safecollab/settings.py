@@ -88,7 +88,6 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-<<<<<<< HEAD
 }
 """
 
@@ -100,6 +99,8 @@ DATABASES = {
         'NAME': 'testdb',
         'HOST': '127.0.0.1',
         'PORT': '5432',
+        'USER': 'postgres',
+        'PASSWORD': 'liamjd',
     }
 }"""
 
@@ -113,8 +114,6 @@ DATABASES = {
         'PASSWORD': 'fjwnXJZI-kycejxLmTb9wnx1eh',
     }
 }
-
-print(os.environ.get('DATABASE_URL'))
 
 if os.environ.get('DATABASE_URL'):
     db_from_env = dj_database_url.config(conn_max_age=500)
