@@ -18,7 +18,9 @@ class DocumentForm(forms.Form):
 
 
 class SearchReportsForm(forms.Form):
-    keyword = forms.CharField(max_length=128, required=False)
-    name = forms.CharField(max_length=128, required=False)
-    #owner = forms.CharField(max_length=128, required=False)
-    short_desc = forms.CharField(max_length=120, required=False)
+    all = forms.CharField(max_length=128, initial="", required=False)
+    name = forms.CharField(max_length=128, initial="", required=False)
+    short_desc = forms.CharField(max_length=128, initial="", required=False)
+    long_desc = forms.CharField(max_length=128, initial="", required=False)
+    owner = forms.CharField(max_length=128, initial="", required=False)
+    num_results = forms.IntegerField(required=False)

@@ -48,6 +48,6 @@ class RFile(models.Model):
 
 # temporary model used for file upload example
 class Document(models.Model):
-    name = models.CharField(max_length=128)
-    description = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, default='name')
+    description = models.CharField(max_length=128, default='description')
     docfile = models.FileField(upload_to='documents/%Y/%m/%d')

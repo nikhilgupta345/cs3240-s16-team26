@@ -138,3 +138,10 @@ h1, h5 {
 	background-color: #1CA347;
 	border-color: #1CA347;
 }
+
+.table-hover tbody tr:hover td {
+	background-color: whitesmoke;
+}
+.table-hover tbody tr td {
+	background-color: white;
+}

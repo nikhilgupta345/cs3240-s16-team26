@@ -148,39 +148,36 @@
                           </form>
                         </div>
 
-                          <div id="search" class="tab-pane fade">
+                        <div id="search-reports" class="tab-pane">
                             <h3>Search for Reports</h3>
-                            <form id="search-form" action="/search/" method="post">
+                            <form action="/search_reports/" id="search-form" method="POST">
                                 {% csrf_token %}
                                     <div class="form-group">
-
-                                        <input type="text" name="keyword" id="keyword" tabindex="1" class="form-control" placeholder="All Fields" value="">
-                                        <input type="text" name="search-report-name" id="search-report-name" tabindex="1" class="form-control" placeholder="Name" value="">
-                                        <input type="text" name="search-report-short-desc" id="search-report-short-desc" tabindex="1" class="form-control" placeholder="Short Description" value="">
-                                        <input type="submit" name="search-submit" id="search-submit" tabindex="1" class="form-control" value="Search" data-target="#search-results-table">
+                                        <input type="text" name="search-reports-all" id="search-reports-all" tabindex="1" class="form-control" placeholder="All Fields">
+                                        <input type="text" name="search-reports-short_desc" id="search-reports-short_desc" tabindex="1" class="form-control" placeholder="Name">
+                                        <input type="text" name="search-reports-long_desc" id="search-reports-long_desc" tabindex="1" class="form-control" placeholder="Description">
+                                        <input type="text" name="search-reports-owner" id="search-reports-owner" tabindex="1" class="form-control" placeholder="Owner">
+                                        <input type="number" name="search-reports-num_results" id="search-reports-num_results" tabindex="1" class="form-control" placeholder="Number of results">
+                                        <input type="submit" name="search-submit" id="search-submit" tabindex="1" class="form-control btn btn-primary" value="Search" data-target="#search-results-table">
                                     </div>
                             </form>
-
-                            <table class="table table-hover" id="search-results-table">
+                            <table class="table table-hover" id="search-results-table" style="table-layout: fixed; width: 100%">
                                 <thead>
                                   <tr>
-                                      <th>Name</th>
-                                      <th>Short Description</th>
-                                      <th>FDA Signature (Link)</th>
-                                      <!--
-                                      <th>Name</th>
-                                      <th>Short Description</th>
-                                      <th>Owner</th>
-                                      <th>Date</th>
-                                      -->
+                                      <th style="width:25%">Name</th>
+                                      <th style="width:45%">Description</th>
+                                      <th style="width:20%">Owner</th>
+                                      <th style="width:10%">Access</th>
                                   </tr>
                                 </thead>
                                 <tbody>
+                                    <!-- <div class="search-results"></div> -->
                                   {% for result in search_results %}
                                     <tr>
-                                        <td> {{ result.name }} </td>
-                                        <td> {{ result.description }} </td>
-                                        <td><a href="{{ result.docfile.url }}">{{ result.docfile.name }}</a></td>
+                                        <td> {{ result.short_desc }} </td>
+                                        <td style="word-wrap: break-word"> {{ result.long_desc }} </td>
+                                        <td> {{ result.owner.username }} </td>
+                                        <td><!-- access goes here! --></td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

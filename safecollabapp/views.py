@@ -67,51 +67,87 @@ def list(request):
 def search_reports(request):
 
     if request.method == 'POST':
+
+        context_dict = {
+            'search_results' : [],
+        }
+
         form = SearchReportsForm(request.POST)
         if form.is_valid():
 
+            user_input = {
+                'all'           :   '',
+                'short_desc'    :   '',
+                'long_desc'     :   '',
+                'owner'         :   '',
+            }
+
             # parse search critieria from user input
             delimiter = ";"
-            keyword_input = request.POST['keyword']
-            keywords = keyword_input.split(delimiter)
+            for field in user_input.keys():
+                post_id = 'search-reports-' + field       # need to double check ig this is name or ID from index.html...
+                user_input[field] = request.POST[post_id]
+                user_input[field] = user_input[field].split(delimiter)
 
-            name_input = request.POST['search-report-name']
-            names = name_input.split(delimiter)
+            Q_objects = {
+                'all'           :   Q(),
+                'short_desc'    :   Q(),
+                'long_desc'     :   Q(),
+                'owner'         :   Q(),
+            }
 
-            short_desc_input = request.POST['search-report-short-desc']
-            short_descs = short_desc_input.split(delimiter)
+            # compute Q object for 'all'
+            # will use other Q object fields to store intermediates
 
-            #owner = request.POST['owner']
+            for item in user_input['all']:
+                Q_objects['short_desc'] |= Q(short_desc__icontains=item)
+                Q_objects['long_desc'] |= Q(long_desc__icontains=item)
+                Q_objects['owner'] |= Q(owner__username__icontains=item)
 
-            Q_keywords_name = Q()
-            Q_keywords_desc = Q()
-            for item in keywords:
-                Q_keywords_name |= Q(name__icontains=item)
-                Q_keywords_desc |= Q(description__icontains=item)
+            for field in Q_objects.keys():
+                if( field != 'all'):
+                    Q_objects['all'] |= Q_objects[field]
 
-            Q_names = Q()
-            for item in names:
-                Q_names |= Q(name__icontains=item)
+            # compute Q objects for other fields
+            # reset intermediates formed in 'all' computation
+            for field in Q_objects.keys():
+                if( field != 'all'):
+                    Q_objects[field] = Q()
 
-            Q_short_descs = Q()
-            for item in short_descs:
-                Q_short_descs |= Q(description__icontains=item)
+            # compute Q object for other fields
+            for item in user_input['short_desc']:
+                Q_objects['short_desc'] |= Q(short_desc__icontains=item)
 
-            # select all Documents where name or description contains keyword
-            search_results = Document.objects.filter(
-                                ( Q_keywords_name | Q_keywords_desc )
-                                & Q_names
-                                & Q_short_descs
-                                ).order_by(Lower('name').desc())
-            # use this for searching actual reports
-            """
-            search_results = Report.objects.filter(
-                                Q(name__icontains=keyword)
-                                | Q(short_desc__icontains=keyword)
-                                | Q(time__icontains=keyword)
-                                | Q(owner__icontains=keyword)
-                            ).order_by('-time')
-            """
+            for item in user_input['long_desc']:
+                Q_objects['long_desc'] |= Q(long_desc__icontains=item)
+
+            for item in user_input['owner']:
+                Q_objects['owner'] |= Q(owner__username__icontains=item)
+
+            # get number of results
+            num_results = request.POST['search-reports-num_results']
+
+            # get search results
+            search_results = None
+            if(num_results == ''):
+                # select all Reports where name or description contains keyword
+                search_results = Report.objects.filter(
+                                Q_objects['all']
+                                & Q_objects['short_desc']
+                                & Q_objects['long_desc']
+                                & Q_objects['owner']
+                                ).order_by(Lower('short_desc').desc())
+            else:
+                num_result = int(num_results)
+                # select the first num_results Reports where name or description contains keyword
+                search_results = Report.objects.filter(
+                                    Q_objects['all']
+                                    & Q_objects['short_desc']
+                                    & Q_objects['long_desc']
+                                    & Q_objects['owner']
+                                    ).order_by(Lower('short_desc').desc())[:num_results]
+
+            # create access dict for search results
 
             #return HttpResponseRedirect(reverse('safecollabapp.views.search'))
 
@@ -121,10 +157,39 @@ def search_reports(request):
                 {'search_results': search_results, 'form': form},
                 context_instance=RequestContext(request)
             )
+
+            """
+            # fill context_dict with fields from search_results to be displayed
+            num_results = 0
+            result_data = []
+            for result in search_results:
+                num_results += 1
+                result_data.append([result.short_desc, result.long_desc, result.owner.username])
+            context_dict['search_results'] = result_data
+
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+            """
+
     else:
-        # stay on current page?
+        # stay on current page
         return redirect('/index/')
 
+
+"""
+    if request.method == 'POST':
+        context_dict = {'short_desc' : ''}
+        report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
+        context_dict['short_desc'] = report.short_desc
+        context_dict['long_desc'] = report.long_desc
+        context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
+        context_dict['owner'] = report.owner.username
+        context_dict['file_name'] = 'No files associated with report.'
+        files = RFile.objects.filter(report=report)
+        for file in files:
+            context_dict['file_name'] = file.name
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')
+"""
 def parse_search_criteria(user_input):
     criteria = []
     criteria = user_input.split(";")
