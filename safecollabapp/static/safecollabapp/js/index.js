@@ -197,7 +197,7 @@ $(document).ready(function() {
       data: data_dict,
 
       success: function(json) {
-        if(json['response'] != 'Could not find a user with that username') {
+        if(json['response'].contains('Successful')) {
             $('#manager-list ul').append('<li>' + username + '</li>');
         }
         
