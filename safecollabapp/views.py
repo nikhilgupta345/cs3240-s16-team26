@@ -86,7 +86,7 @@ def search_reports(request):
             delimiter = ";"
             for field in user_input.keys():
                 post_id = 'search-reports-' + field       # need to double check ig this is name or ID from index.html...
-                user_input[field] = request.POST[post_id]
+                user_input[field] = request.POST.get(post_id)
                 user_input[field] = user_input[field].split(delimiter)
 
             Q_objects = {
@@ -150,7 +150,7 @@ def search_reports(request):
             # create access dict for search results
 
             #return HttpResponseRedirect(reverse('safecollabapp.views.search'))
-
+            """
             # Render index page with the search results and the form
             return render_to_response(
                 'index.html',
@@ -160,15 +160,13 @@ def search_reports(request):
 
             """
             # fill context_dict with fields from search_results to be displayed
-            num_results = 0
             result_data = []
             for result in search_results:
-                num_results += 1
                 result_data.append([result.short_desc, result.long_desc, result.owner.username])
             context_dict['search_results'] = result_data
 
             return HttpResponse(json.dumps(context_dict), content_type="application/json")
-            """
+
 
     else:
         # stay on current page
