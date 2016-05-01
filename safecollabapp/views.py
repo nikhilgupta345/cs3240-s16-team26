@@ -660,6 +660,7 @@ def view_report(request):
         context_dict['long_desc'] = report.long_desc
         context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
         context_dict['owner'] = report.owner.username
+        context_dict['is_owner'] = (report.owner == request.user)
         context_dict['file_name'] = 'No files associated with report.'
         files = RFile.objects.filter(report=report)
         for file in files:
