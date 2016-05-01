@@ -27,5 +27,5 @@ urlpatterns = [
     url(r'^sm_delete_report/$', views.sm_delete_report, name='SM Delete Report'),
     url(r'^download/(?P<fid>\d+)$', views.download_file, name='Download File'),
     url(r'^standalone_report_list/(?P<username>\w+)$', views.standalone_report_list.as_view(), name='Standalone Report List'),
-    url(r'^standalone_login/(?P<username>\w+)/(?P<password>\w+)/$', views.standalone_login, name='Standalone Login'),
+    url(r'^standalone_login/$', views.standalone_login, name='Standalone Login'),
 ]

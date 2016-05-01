@@ -20,9 +20,9 @@ application = get_wsgi_application()
 
 fs = FileSystemStorage(location = '/media/')
 
-#base_path = "http://127.0.0.1:8000/"
+base_path = "http://127.0.0.1:8000/"
 
-base_path = "http://damp-sierra-38619.herokuapp.com/"
+#base_path = "http://damp-sierra-38619.herokuapp.com/"
 
 home = expanduser("~")
 home_file_path = copy.deepcopy(home)
@@ -60,22 +60,14 @@ class LoginWindow(QtGui.QWidget):
     def login(self):
         username = self.userName.text()
         password = self.password.text()
-        #data = {'X-CSRFToken': get_token(),
-               #'username': username,
-                #'password': password}
-        #csrf_token = get_token(request=requests.post(base_path + "standalone_login/", data=data))
-        #r = requests.post(base_path + "standalone_login/", data=data)
-        #print(requests.post(base_path + "standalone_login/", data=data))
-        #print(r)
-        r = requests.get(base_path + "standalone_login/" + username + "/" + password + "/")
-        print(r)
+        data = {'username': username,
+                'password': password}
+        r = requests.post(base_path + "standalone_login/", data=data)
         if r.content == b'True':
-            print("yay")
             self.mainWindow = Window(username)
             self.mainWindow.show()
             self.close()
         else:
-            print("not yay")
             incorrect = QtGui.QLabel("Invalid username or password. Please try again.", self)
             incorrect.resize(incorrect.sizeHint())
             incorrect.move(170, 270)

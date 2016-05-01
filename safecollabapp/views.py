@@ -24,6 +24,7 @@ from safecollabapp.serializers import RFile_Serializer, Report_Serializer
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
 
 
 def list(request):
@@ -488,22 +489,9 @@ def download_file(request, fid):
     response['Content-Disposition'] = 'attachment; filename=%s' % fname
     return response
 
-def standalone_login(request, username, password):
-    #if request.method == 'POST':
-    context_dict = {'response': ''}
-    print(username)
-    print(password)
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        if user.is_active:
-            print("congrats")
-            response = HttpResponse(content='True')
-            print(response.content)
-            return response
-    else:
-        return HttpResponse(content='False')
-
-    """if request.method == 'POST':
+@csrf_exempt
+def standalone_login(request):
+    if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
@@ -515,7 +503,7 @@ def standalone_login(request, username, password):
                 return HttpResponse(content='True')
         else:
             print("Not yay")
-            return HttpResponse(content='False')"""
+            return HttpResponse(content='False')
 
 #@permission_classes(isAuthenticated)
 class standalone_report_list(APIView):
