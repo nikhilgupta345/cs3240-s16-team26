@@ -670,13 +670,15 @@ $(document).ready(function() {
               '<h3>' + json['short_desc'] + '</h3>' +
               '<h4>' + json['time'] + '</h4>' +
               '<p>' + json['long_desc'] + '</p>' +
-              '<p>' + json['file_name'] + '</p>' +
+              '<p><em>File:</em> ' + json['file_name'] + '</p>' +
+              (json['is_owner'] ? 
               '<p><form action="" class="begin-edit-report-form" method="POST">' +
               '<input type="hidden" name="report_name" value="' + json['short_desc'] + '" />' +
               '<input type="submit" value="Edit Report" class="btn btn-primary" /></form></p>' +
               '<p><form action="/delete_report/" class="delete-report-form" method="POST">' +
               '<input type="hidden" name="report_name" value="' + json['short_desc'] + '" />' +
               '<input type="submit" value="Delete Report" class="btn btn-danger" /></form></p>'
+              : '')
               );
 
           $('form.delete-report-form').on('submit', function(event) {
