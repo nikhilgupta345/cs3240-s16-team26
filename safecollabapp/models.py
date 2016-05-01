@@ -13,6 +13,9 @@ class PrivateMessage(models.Model):
     time = models.DateTimeField(auto_now_add=True) # timestamps upon message creation
     text = models.TextField() # actual text (plain or encrypted) of the message
 
+#-----------------------------------------------------------------------------------------
+# potential models and helper functions to generate paths for reports and documents
+
 class Folder(models.Model):
     name = models.CharField(max_length=128)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
@@ -32,16 +35,19 @@ def report_path(instance, filename):
     return '{0}/{1}'.format(instance.owner, instance.name)
 
 def datafile_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT/instance.report.short_desc/instance.owner/instance.name
-    return '{0}/{1}/{2}'.format(instance.report.short_desc, instance.owner, instance.name)
+    # file will be uploaded to MEDIA_ROOT/instance.owner/filename
+    return '{0}/{1}/{2}'.format(instance.report.short_desc, instance.owner, filename)
 
 class RFile(models.Model):
     name = models.CharField(max_length=128)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
-    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='+')
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='files')
     docfile = models.FileField(upload_to=datafile_path)
     encrypted = models.BooleanField(default=False)
 
+
 # temporary model used for file upload example
 class Document(models.Model):
+    name = models.CharField(max_length=128, default='name')
+    description = models.CharField(max_length=128, default='description')
     docfile = models.FileField(upload_to='documents/%Y/%m/%d')

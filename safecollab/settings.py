@@ -43,7 +43,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'safecollabapp',
+    'safecollabapp', 'rest_framework',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -80,7 +80,6 @@ WSGI_APPLICATION = 'safecollab.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
 """
 DATABASES = {
     'default': {
@@ -89,7 +88,6 @@ DATABASES = {
     }
 }
 """
-
 # This is the configuration for PostgreSQL
 DATABASES = {
     'default': {
@@ -97,8 +95,11 @@ DATABASES = {
         'NAME': 'testdb',
         'HOST': '127.0.0.1',
         'PORT': '5432',
+        'USER': 'postgres',
+        'PASSWORD': 'postgrebtb8db'
     }
 }
+
 # Extra DB configuration for Heroku
 db_from_env = dj_database_url.config(conn_max_age=500)
 DATABASES['default'].update(db_from_env)
@@ -127,4 +128,3 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
-

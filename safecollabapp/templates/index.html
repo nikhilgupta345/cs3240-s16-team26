@@ -62,8 +62,9 @@
                   <div class="tab-content">
                     <div id="reports" class="tab-pane fade in active">
                       <ul class="nav nav-tabs">
-                        <li class="active"><a href="#view-reports" data-toggle="tab">View Reports</a></li>
-                        <li><a href="#create-reports" data-toggle="tab">Create a Report</a></li>
+                          <li class="active"><a href="#view-reports" data-toggle="tab">View Reports</a></li>
+                          <li><a href="#create-reports" data-toggle="tab">Create a Report</a></li>
+                          <li><a href="#search-reports" data-toggle="tab">Search Reports</a></li>
                       </ul>
                       <div class="tab-content">
                         <div id="view-reports" class="tab-pane active">
@@ -146,8 +147,45 @@
                           </div>
                           </form>
                         </div>
+
+                        <div id="search-reports" class="tab-pane">
+                            <h3>Search for Reports</h3>
+                            <form action="/search_reports/" id="search-form" method="POST">
+                                {% csrf_token %}
+                                    <div class="form-group">
+                                        <input type="text" name="search-reports-all" id="search-reports-all" tabindex="1" class="form-control" placeholder="All Fields">
+                                        <input type="text" name="search-reports-short_desc" id="search-reports-short_desc" tabindex="1" class="form-control" placeholder="Name">
+                                        <input type="text" name="search-reports-long_desc" id="search-reports-long_desc" tabindex="1" class="form-control" placeholder="Description">
+                                        <input type="text" name="search-reports-owner" id="search-reports-owner" tabindex="1" class="form-control" placeholder="Owner">
+                                        <input type="number" name="search-reports-num_results" id="search-reports-num_results" tabindex="1" class="form-control" placeholder="Number of results">
+                                        <input type="submit" name="search-submit" id="search-submit" tabindex="1" class="form-control btn btn-primary" value="Search" data-target="#search-results-table">
+                                    </div>
+                            </form>
+                            <table class="table table-hover" id="search-results-table" style="table-layout: fixed; width: 100%">
+                                <thead>
+                                  <tr>
+                                      <th style="width:25%">Name</th>
+                                      <th style="width:45%">Description</th>
+                                      <th style="width:20%">Owner</th>
+                                      <th style="width:10%">Access</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- <div class="search-results"></div> -->
+                                  {% for result in search_results %}
+                                    <tr>
+                                        <td> {{ result.short_desc }} </td>
+                                        <td style="word-wrap: break-word"> {{ result.long_desc }} </td>
+                                        <td> {{ result.owner.username }} </td>
+                                        <td><!-- access goes here! --></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                          </div>
                       </div>
                     </div>
+
                     <div id="manage-groups" class="tab-pane fade">
                       <table class="table table-hover" id="groups_table">
                         <thead>

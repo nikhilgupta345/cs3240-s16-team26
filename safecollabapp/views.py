@@ -1,4 +1,6 @@
+from django.db.models.functions import Lower
 from django.shortcuts import render
+from django.http import HttpRequest, HttpResponseRedirect
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 #from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import User, Group
@@ -17,7 +19,21 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 
 from safecollabapp.models import Document
+from safecollabapp.forms import DocumentForm, SearchReportsForm
+
+#------------------------------------
+# added for search
+from django.db.models import Q
+from functools import reduce
+import operator
+
 from safecollabapp.forms import DocumentForm
+from rest_framework.views import APIView
+from rest_framework import generics
+from safecollabapp.serializers import RFile_Serializer, Report_Serializer
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from rest_framework.response import Response
 
 
 def list(request):
@@ -25,7 +41,11 @@ def list(request):
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
-            newdoc = Document(docfile=request.FILES['docfile'])
+
+            newdoc = Document(  name=request.POST['name'],
+                                description=request.POST['description'],
+                                docfile=request.FILES['docfile']
+                            )
             newdoc.save()
 
             # Redirect to the document list after POST
@@ -42,6 +62,138 @@ def list(request):
         {'documents': documents, 'form': form},
         context_instance=RequestContext(request)
     )
+
+# search report models within data base
+def search_reports(request):
+
+    if request.method == 'POST':
+
+        context_dict = {
+            'search_results' : [],
+        }
+
+        form = SearchReportsForm(request.POST)
+        if form.is_valid():
+
+            user_input = {
+                'all'           :   '',
+                'short_desc'    :   '',
+                'long_desc'     :   '',
+                'owner'         :   '',
+            }
+
+            # parse search critieria from user input
+            delimiter = ";"
+            for field in user_input.keys():
+                post_id = 'search-reports-' + field       # need to double check ig this is name or ID from index.html...
+                user_input[field] = request.POST[post_id]
+                user_input[field] = user_input[field].split(delimiter)
+
+            Q_objects = {
+                'all'           :   Q(),
+                'short_desc'    :   Q(),
+                'long_desc'     :   Q(),
+                'owner'         :   Q(),
+            }
+
+            # compute Q object for 'all'
+            # will use other Q object fields to store intermediates
+
+            for item in user_input['all']:
+                Q_objects['short_desc'] |= Q(short_desc__icontains=item)
+                Q_objects['long_desc'] |= Q(long_desc__icontains=item)
+                Q_objects['owner'] |= Q(owner__username__icontains=item)
+
+            for field in Q_objects.keys():
+                if( field != 'all'):
+                    Q_objects['all'] |= Q_objects[field]
+
+            # compute Q objects for other fields
+            # reset intermediates formed in 'all' computation
+            for field in Q_objects.keys():
+                if( field != 'all'):
+                    Q_objects[field] = Q()
+
+            # compute Q object for other fields
+            for item in user_input['short_desc']:
+                Q_objects['short_desc'] |= Q(short_desc__icontains=item)
+
+            for item in user_input['long_desc']:
+                Q_objects['long_desc'] |= Q(long_desc__icontains=item)
+
+            for item in user_input['owner']:
+                Q_objects['owner'] |= Q(owner__username__icontains=item)
+
+            # get number of results
+            num_results = request.POST['search-reports-num_results']
+
+            # get search results
+            search_results = None
+            if(num_results == ''):
+                # select all Reports where name or description contains keyword
+                search_results = Report.objects.filter(
+                                Q_objects['all']
+                                & Q_objects['short_desc']
+                                & Q_objects['long_desc']
+                                & Q_objects['owner']
+                                ).order_by(Lower('short_desc').desc())
+            else:
+                num_result = int(num_results)
+                # select the first num_results Reports where name or description contains keyword
+                search_results = Report.objects.filter(
+                                    Q_objects['all']
+                                    & Q_objects['short_desc']
+                                    & Q_objects['long_desc']
+                                    & Q_objects['owner']
+                                    ).order_by(Lower('short_desc').desc())[:num_results]
+
+            # create access dict for search results
+
+            #return HttpResponseRedirect(reverse('safecollabapp.views.search'))
+
+            # Render index page with the search results and the form
+            return render_to_response(
+                'index.html',
+                {'search_results': search_results, 'form': form},
+                context_instance=RequestContext(request)
+            )
+
+            """
+            # fill context_dict with fields from search_results to be displayed
+            num_results = 0
+            result_data = []
+            for result in search_results:
+                num_results += 1
+                result_data.append([result.short_desc, result.long_desc, result.owner.username])
+            context_dict['search_results'] = result_data
+
+            return HttpResponse(json.dumps(context_dict), content_type="application/json")
+            """
+
+    else:
+        # stay on current page
+        return redirect('/index/')
+
+
+"""
+    if request.method == 'POST':
+        context_dict = {'short_desc' : ''}
+        report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
+        context_dict['short_desc'] = report.short_desc
+        context_dict['long_desc'] = report.long_desc
+        context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
+        context_dict['owner'] = report.owner.username
+        context_dict['file_name'] = 'No files associated with report.'
+        files = RFile.objects.filter(report=report)
+        for file in files:
+            context_dict['file_name'] = file.name
+        return HttpResponse(json.dumps(context_dict), content_type="application/json")
+    return redirect('/index/')
+"""
+def parse_search_criteria(user_input):
+    criteria = []
+    criteria = user_input.split(";")
+    return criteria
 
 #---------------------------------
 
@@ -464,7 +616,7 @@ def open_folder(request):
 
     return redirect('/index/')
 
-def delete_report(request):
+def sm_delete_report(request):
     if request.method == 'POST':
         context_dict = {'response' : ''}
         report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
@@ -474,3 +626,28 @@ def delete_report(request):
 
 def close_folder(request):
     return HttpResponse(json.dumps({}), content_type="application/json")
+
+def download_file(request, fid):
+    file = RFile.objects.get(pk=fid)
+    fname = file.docfile.name
+    response = HttpResponse(file.docfile, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename=%s' % fname
+    return response
+
+#@permission_classes(isAuthenticated)
+class standalone_report_list(APIView):
+
+    def get(self, request, username):
+        user = get_object_or_404(User, username=username)
+        queryset = Report.objects.filter(
+            Q(owner=user) | Q(private=False)
+        )
+        serializer = Report_Serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+#@permission_classes(isAuthenticated)
+class standalone_file_list(generics.ListAPIView):
+    serializer_class = RFile_Serializer
+    queryset = RFile.objects.all()
+

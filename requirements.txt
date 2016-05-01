@@ -7,3 +7,6 @@ psycopg2==2.6.1
 pycrypto==2.6.1
 static3==0.6.1
 whitenoise==3.0
+PyQt4==4.11.4
+djangorestframework==3.3.3
+requests==2.9.1

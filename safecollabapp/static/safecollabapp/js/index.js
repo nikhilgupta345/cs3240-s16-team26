@@ -1,5 +1,46 @@
 $(document).ready(function() {
 
+  $('search-form').on('submit', function(event) {
+      event.preventDefault();
+
+      csrftoken = getCookie('csrftoken');
+      $.ajaxSetup({
+          beforeSend: function (xhr, settings) {
+              if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                  xhr.setRequestHeader("X-CSRFToken", csrftoken);
+              }
+          }
+      });
+
+      $.ajax({
+          url: "/search_reports/",
+          type: "POST",
+          data: {},
+
+          success: function (json) {
+
+              results = json['search_results'];
+              table_rows = '';
+              for( var i = 0; i < results.size(); i++) {
+                  table_rows += '<tr>';
+                  table_rows += '<td>' + results[i][0] + '</td>';
+                  table_rows += '<td>' + results[i][1] + '</td>';
+                  table_rows += '<td>' + results[i][2] + '</td>';
+                  table_rows += '</tr>';
+              }
+
+              $('#view-search-results').html(
+                  table_rows
+              );
+          },
+
+          error: function (xhr, errmsg, err) {
+              console.log('Error displaying search results');
+          }
+
+      });
+  });
+
   /* Add user to a group */
   $('tbody').on('click', '.add_user_to_group_button', function(event) {
     event.preventDefault();
@@ -585,7 +626,7 @@ $(document).ready(function() {
 
         $('#sitemanager-viewreport-delete-button').on('click', function() {
           $.ajax({
-            url: "/delete_report/",
+            url: "/sm_delete_report/",
             type: "POST",
             data: {
               'short_desc': reportName
