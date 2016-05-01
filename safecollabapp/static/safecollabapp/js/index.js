@@ -798,6 +798,7 @@ $(document).ready(function() {
         $('#viewfile-response').html(
             '<h3>' + json['file_name'] + '</h3>' +
             '<h4><em>Report: </em>' + json['report_name'] + '</h4>' +
+            '<p><a href="/download/' + json['file_id'] + '"><button class="btn btn-primary">Download</button></a></p>' +
             '<p><form action="/delete_file/" class="delete-file-form" method="POST">' +
             '<input type="hidden" name="file_name" value="' + json['file_name'] + '" />' +
             '<input type="submit" value="Delete file" class="btn btn-danger" /></form></p>'

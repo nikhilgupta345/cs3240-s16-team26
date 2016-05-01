@@ -615,7 +615,7 @@ def create_report(request):
         folder_name = request.POST.get('folder')
         if folder_name != '':
             folder = Folder.objects.filter(owner=owner, name=folder_name)[0]
-            new_report.folder = folder
+            new_report.folder_id = folder
 
         # save new report
         new_report.save()
@@ -630,7 +630,7 @@ def create_report(request):
 def get_reports(user):
     reports = []
     for report in Report.objects.all():
-        if report.owner == user and report.folder != None:
+        if report.owner == user and report.folder_id != None:
             continue
             
         if report.group == '' or report.group == 'Public':
@@ -682,6 +682,7 @@ def view_file(request):
         rfile = RFile.objects.filter(name = request.POST.get('file_name'))[0]
         context_dict['file_name'] = rfile.name
         context_dict['report_name'] = rfile.report.short_desc
+        context_dict['file_id'] = rfile.id
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     return redirect('/index/')
 
@@ -714,7 +715,7 @@ def open_folder(request):
     if request.method == 'POST':
         folder_name = request.POST.get('folder_name')
         folder = Folder.objects.filter(owner=request.user, name=folder_name)[0]
-        reports = Report.objects.filter(owner=request.user, folder=folder)
+        reports = Report.objects.filter(owner=request.user, folder_id=folder)
 
         context_dict = {'reports' : []}
         for report in reports:
@@ -735,9 +736,9 @@ def delete_folder(request):
     if request.method == 'POST':
         folders = Folder.objects.filter(owner=request.user, name = request.POST.get('folder_name'))
         for folder in folders:
-            reports = Report.objects.filter(owner=request.user, folder=folder)
+            reports = Report.objects.filter(owner=request.user, folder_id=folder)
             for report in reports:
-                report.folder = None
+                report.folder_id = None
                 report.save()
         folders.delete()
 
