@@ -267,7 +267,7 @@ def add_user_to_group(request):
 
 def create_group(request):
     if request.method == 'POST': # Check if they submitted the form to create a new group
-        name = request.POST.get('sm_group_name') # Get the group name that they wish to add
+        name = request.POST.get('group_name') # Get the group name that they wish to add
         context_dict = {
             'response' : '',
             'usernames': [],
