@@ -26,6 +26,6 @@ urlpatterns = [
     url(r'^open_folder/$', views.open_folder, name='Open Folder'),
     url(r'^close_folder/$', views.close_folder, name='Close Folder'),
     url(r'^sm_delete_report/$', views.sm_delete_report, name='SM Delete Report'),
-    url(r'^download/(?P<fid>.*)$', views.download_file, name='Download File'),
+    url(r'^download/(?P<fid>\d+)$', views.download_file, name='Download File'),
     url(r'^standalone_report_list/(?P<username>\w+)$', views.standalone_report_list.as_view(), name='Standalone Report List'),
 ]
