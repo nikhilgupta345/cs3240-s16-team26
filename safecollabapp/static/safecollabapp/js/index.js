@@ -1,7 +1,22 @@
 $(document).ready(function() {
 
-  $('search-form').on('submit', function(event) {
+  $('#search-form').on('submit', function(event) {
       event.preventDefault();
+
+      all = $('#search-reports-all').val();
+      short_desc = $('#search-reports-short_desc').val();
+      long_desc = $('#search-reports-long_desc').val();
+      owner = $('#search-reports-owner').val();
+      num_results = $('#search-reports-num_results').val();
+
+        data_dict = {
+            'search-reports-all' : all,
+            'search-reports-short_desc' : short_desc,
+            'search-reports-long_desc' : long_desc,
+            'search-reports-owner' : owner,
+            'search-reports-num_results' : num_results
+
+        };
 
       csrftoken = getCookie('csrftoken');
       $.ajaxSetup({
@@ -15,7 +30,7 @@ $(document).ready(function() {
       $.ajax({
           url: "/search_reports/",
           type: "POST",
-          data: {},
+          data: data_dict,
 
           success: function (json) {
 
