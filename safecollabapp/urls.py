@@ -18,6 +18,7 @@ urlpatterns = [
     url(r'^messages/$', views.messages, name='Private Messages'),
     url(r'^send_message/$', views.send_message, name='Send Message'),
     url(r'^get_messages/$', views.get_messages, name='Get Messages'),
+    url(r'^get_messages_decrypt/$', views.get_messages_decrypt, name='Decrypt Messages'),
     url(r'^search_reports/$', views.search_reports, name='Search'),
     url(r'^create_report/$', views.create_report, name='Create Report'),
     url(r'^view_report/$', views.view_report, name='View Report'),
