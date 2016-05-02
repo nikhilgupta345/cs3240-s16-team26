@@ -62,7 +62,6 @@ class LoginWindow(QtGui.QWidget):
         data = {'username': username,
                 'password': password}
         r = requests.post(base_path + "standalone_login/", data=data)
-        print(r)
         if r.content == b'True':
             self.mainWindow = Window(username)
             self.mainWindow.show()
@@ -72,18 +71,6 @@ class LoginWindow(QtGui.QWidget):
             incorrect.resize(incorrect.sizeHint())
             incorrect.move(170, 270)
             incorrect.show()
-        """user = authenticate(username=username, password=password)
-        if user is not None:
-            # the password verified for the user
-            if user.is_active:
-                self.mainWindow = Window(user)
-                self.mainWindow.show()
-                self.close()
-        else:
-            incorrect = QtGui.QLabel("Invalid username or password. Please try again.", self)
-            incorrect.resize(incorrect.sizeHint())
-            incorrect.move(170, 270)
-            incorrect.show()"""
 
 
 #Class to store file information for encrytion and decryption
@@ -175,7 +162,6 @@ class FileList(QtGui.QListWidget):
         hash_key = SHA256.new()
         hash_key.update(symm_key)
         key_size16 = hash_key.digest()[0:16]
-        key_size16.decode("Latin-1")
         totaltext = ''
         try:
             with open(file_name, 'rb') as f:
