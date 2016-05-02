@@ -557,7 +557,6 @@ def messages(request):
 
 def send_message(request):
     if request.method == 'POST':
-        print('yay')
         sender = request.user
         recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
         message = request.POST.get('message')

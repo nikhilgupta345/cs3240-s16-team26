@@ -361,7 +361,6 @@ $(document).ready(function() {
        '<div class="form-group">' +
        '<div class="row"><input type="hidden" id="recipient" name="recipient" value="' + recipient + '"/>' +
        '<div class="col-sm-12"><textarea rows="8" id="message" name="message" style="resize:none;" class="form-control"></textarea></div></div>' +
-       '<div class="row"><div class="col-sm-12"><label for="msg-encrypted">Encrypted: </label><input type="checkbox" id="msg-encrypted" name="encrypted" /></div></div>' +
        '<div class="row"><div class="col-sm-12"><input type="submit" value="Send" class="form-control btn btn-primary" />' +
        '</div></div></div></form>'
         );
@@ -371,11 +370,9 @@ $(document).ready(function() {
       var form = $(event.target);
       var recipient = form.find('#recipient').val();
       var messageText = form.find('#message').val();
-      var encrypted = form.find('#msg-encrypted').checked;
       var data_dict = {
         'recipient' : recipient,
         'message' : messageText,
-        'encrypted' : encrypted,
       };
 
       csrftoken = getCookie('csrftoken');
