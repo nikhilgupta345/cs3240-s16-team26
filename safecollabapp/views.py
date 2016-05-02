@@ -639,7 +639,6 @@ def get_folders(user):
     return Folder.objects.filter(owner=user)
 
 def get_files(user):
-
     files = []
     for file in RFile.objects.all():
         if file.encrypted == True:
