@@ -10,6 +10,8 @@ from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
 from safecollabapp.models import PrivateMessage, Folder, Report, RFile
+from Crypto.Hash import SHA256
+from Crypto.Cipher import AES, blockalgo
 
 #---------------------------------
 # added for file upload example
@@ -585,9 +587,15 @@ def send_message(request):
         sender = request.user
         recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
         message = request.POST.get('message')
-
-        new_msg = PrivateMessage(sender = sender, recipient = recipient, text = message)
-        new_msg.save()
+        if request.POST.get('encrypted') == 'true':
+            temp = SHA256.new(b'encrypted').digest()
+            aes = AES.new(temp[:16], mode=blockalgo.MODE_CFB, IV=temp[16:32], segment_size=8)
+            message = aes.encrypt(message.encode())
+            new_msg = PrivateMessage(sender = sender, recipient = recipient, text = 'encrypted', encrypted = True, cipher = message)
+            new_msg.save()
+        else:
+            new_msg = PrivateMessage(sender = sender, recipient = recipient, text = message, encrypted = False, cipher = b'')
+            new_msg.save()
         return HttpResponse(json.dumps({}), content_type="application/json")
 
     return redirect('/index/')
@@ -607,6 +615,35 @@ def get_messages(request):
                 'time' : message.time.strftime('%a %B %d, %I:%M:%S %p %Z'),
                 'text' : message.text,
                 })
+        return HttpResponse(json.dumps(response), content_type="application/json")
+
+    return redirect('/index/')
+
+# gets all messages sent to a certain user
+def get_messages_decrypt(request):
+    if request.method == 'POST':
+        sender = request.user
+        recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
+        messages = sorted(
+                (list(PrivateMessage.objects.filter(sender = recipient, recipient = request.user)) + (list(PrivateMessage.objects.filter(sender = request.user, recipient = recipient)) if sender != recipient else [])),
+                key=lambda msg: msg.time)
+        response = {'messages' : []}
+        for message in messages:
+            if message.encrypted:
+                temp = SHA256.new(b'encrypted').digest()
+                aes = AES.new(temp[:16], mode=blockalgo.MODE_CFB, IV=temp[16:32], segment_size=8)
+                text = aes.decrypt(bytes(message.cipher)).decode("utf-8")
+                response['messages'].append({
+                    'sender' : message.sender.username,
+                    'time' : message.time.strftime('%a %B %d, %I:%M:%S %p %Z'),
+                    'text' : text,
+                    })
+            else:
+                response['messages'].append({
+                    'sender' : message.sender.username,
+                    'time' : message.time.strftime('%a %B %d, %I:%M:%S %p %Z'),
+                    'text' : message.text,
+                    })
         return HttpResponse(json.dumps(response), content_type="application/json")
 
     return redirect('/index/')
@@ -692,9 +729,12 @@ def view_report(request):
         context_dict['owner'] = report.owner.username
         context_dict['is_owner'] = (report.owner == request.user)
         context_dict['file_name'] = 'No files associated with report.'
+        context_dict['file_id'] = '-1'
         files = RFile.objects.filter(report=report)
         for file in files:
             context_dict['file_name'] = file.name
+            if not file.encrypted:
+                context_dict['file_id'] = str(file.id)
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     return redirect('/index/')
 
@@ -798,15 +838,12 @@ def standalone_login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
-        print("Connected")
         if user is not None:
             # the password verified for the user
             if user.is_active:
-                print("Yay")
                 request.session['username'] = username
                 return HttpResponse(content='True')
         else:
-            print("Not yay")
             return HttpResponse(content='False')
 
 #@permission_classes(isAuthenticated)

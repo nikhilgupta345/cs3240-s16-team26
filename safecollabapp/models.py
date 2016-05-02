@@ -12,6 +12,7 @@ class PrivateMessage(models.Model):
     encrypted = models.BooleanField(default=False)
     time = models.DateTimeField(auto_now_add=True) # timestamps upon message creation
     text = models.TextField() # actual text (plain or encrypted) of the message
+    cipher = models.BinaryField(editable = False, default = None)
 
 #-----------------------------------------------------------------------------------------
 # potential models and helper functions to generate paths for reports and documents
