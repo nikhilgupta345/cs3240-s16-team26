@@ -775,10 +775,20 @@ class standalone_report_list(APIView):
 
     def get(self, request, username):
         user = get_object_or_404(User, username=username)
-        queryset = Report.objects.filter(
-            Q(owner=user) | Q(private=False)
-        )
-        serializer = Report_Serializer(queryset, many=True)
+        reports = Report.objects.all()
+        member = False
+        queryset1 = []
+        for report in reports:
+            group = None
+            if report.private and report.owner.username != username:
+                if report.group == "" or report.group == "Public":
+                    continue
+                g = Group.objects.get(name=report.group)
+                if user in g.user_set.all():
+                    queryset1.append(report)
+            else:
+                queryset1.append(report)
+        serializer = Report_Serializer(queryset1, many=True)
         return Response(serializer.data)
 
 
