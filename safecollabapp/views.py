@@ -773,15 +773,12 @@ def standalone_login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
-        print("Connected")
         if user is not None:
             # the password verified for the user
             if user.is_active:
-                print("Yay")
                 request.session['username'] = username
                 return HttpResponse(content='True')
         else:
-            print("Not yay")
             return HttpResponse(content='False')
 
 #@permission_classes(isAuthenticated)
