@@ -185,6 +185,8 @@
                         </div>
                         <div id="search-reports" class="tab-pane">
                             <h3>Search for Reports</h3>
+                            <label for="search-help-checkbox">Show Help:</label><input type="checkbox" name="search-help-checkbox" id="search-help-checkbox" />
+                            <div id="search-help-message"></div>
                             <form action="/search_reports/" id="search-form" method="POST">
                                 {% csrf_token %}
                                     <div class="form-group">
@@ -202,19 +204,20 @@
                                       <th style="width:25%">Name</th>
                                       <th style="width:45%">Description</th>
                                       <th style="width:20%">Owner</th>
-                                      <th style="width:10%">Access</th>
+                                      <th style="width:10%">Privacy</th>
                                   </tr>
                                 </thead>
-                                <tbody>
-                                    <!-- <div class="search-results"></div> -->
+                                <tbody id="search-body">
+                                  <!--
                                   {% for result in search_results %}
                                     <tr>
                                         <td> {{ result.short_desc }} </td>
                                         <td style="word-wrap: break-word"> {{ result.long_desc }} </td>
                                         <td> {{ result.owner.username }} </td>
-                                        <td><!-- access goes here! --></td>
+                                        <td> access goes here! </td>
                                     </tr>
-                                    {% endfor %}
+
+                                    {% endfor %}-->
                                 </tbody>
                             </table>
                           </div>
