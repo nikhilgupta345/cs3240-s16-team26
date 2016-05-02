@@ -189,21 +189,6 @@ def search_reports(request):
         return redirect('/index/')
 
 
-"""
-    if request.method == 'POST':
-        context_dict = {'short_desc' : ''}
-        report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
-        context_dict['short_desc'] = report.short_desc
-        context_dict['long_desc'] = report.long_desc
-        context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
-        context_dict['owner'] = report.owner.username
-        context_dict['file_name'] = 'No files associated with report.'
-        files = RFile.objects.filter(report=report)
-        for file in files:
-            context_dict['file_name'] = file.name
-        return HttpResponse(json.dumps(context_dict), content_type="application/json")
-    return redirect('/index/')
-"""
 def parse_search_criteria(user_input):
     criteria = []
     criteria = user_input.split(";")
