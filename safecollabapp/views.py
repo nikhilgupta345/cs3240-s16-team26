@@ -10,6 +10,8 @@ from django.core.validators import validate_email
 import json
 from django.http import HttpResponse
 from safecollabapp.models import PrivateMessage, Folder, Report, RFile
+from Crypto.Hash import SHA256
+from Crypto.Cipher import AES, blockalgo
 
 #---------------------------------
 # added for file upload example
@@ -37,33 +39,6 @@ from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 
 
-def list(request):
-    # Handle file upload
-    if request.method == 'POST':
-        form = DocumentForm(request.POST, request.FILES)
-        if form.is_valid():
-
-            newdoc = Document(  name=request.POST['name'],
-                                description=request.POST['description'],
-                                docfile=request.FILES['docfile']
-                            )
-            newdoc.save()
-
-            # Redirect to the document list after POST
-            return HttpResponseRedirect(reverse('safecollabapp.views.list'))
-    else:
-        form = DocumentForm()  # A empty, unbound form
-
-    # Load documents for the list page
-    documents = Document.objects.all()
-
-    # Render list page with the documents and the form
-    return render_to_response(
-        'list.html',
-        {'documents': documents, 'form': form},
-        context_instance=RequestContext(request)
-    )
-
 # search report models within data base
 def search_reports(request):
 
@@ -87,7 +62,7 @@ def search_reports(request):
             delimiter = ";"
             for field in user_input.keys():
                 post_id = 'search-reports-' + field       # need to double check ig this is name or ID from index.html...
-                user_input[field] = request.POST[post_id]
+                user_input[field] = request.POST.get(post_id)
                 user_input[field] = user_input[field].split(delimiter)
 
             Q_objects = {
@@ -125,33 +100,17 @@ def search_reports(request):
             for item in user_input['owner']:
                 Q_objects['owner'] |= Q(owner__username__icontains=item)
 
-            # get number of results
-            num_results = request.POST['search-reports-num_results']
-
             # get search results
             search_results = None
-            if(num_results == ''):
-                # select all Reports where name or description contains keyword
-                search_results = Report.objects.filter(
-                                Q_objects['all']
-                                & Q_objects['short_desc']
-                                & Q_objects['long_desc']
-                                & Q_objects['owner']
-                                ).order_by(Lower('short_desc').desc())
-            else:
-                num_result = int(num_results)
-                # select the first num_results Reports where name or description contains keyword
-                search_results = Report.objects.filter(
-                                    Q_objects['all']
-                                    & Q_objects['short_desc']
-                                    & Q_objects['long_desc']
-                                    & Q_objects['owner']
-                                    ).order_by(Lower('short_desc').desc())[:num_results]
+            # select all Reports where name or description contains keyword
+            search_results = Report.objects.filter(
+                            Q_objects['all']
+                            & Q_objects['short_desc']
+                            & Q_objects['long_desc']
+                            & Q_objects['owner']
+                            ).order_by(Lower('short_desc').asc())
 
-            # create access dict for search results
-
-            #return HttpResponseRedirect(reverse('safecollabapp.views.search'))
-
+            """
             # Render index page with the search results and the form
             return render_to_response(
                 'index.html',
@@ -161,36 +120,77 @@ def search_reports(request):
 
             """
             # fill context_dict with fields from search_results to be displayed
-            num_results = 0
+
+            # check if user is site-manager
+            username = request.user.username
+            site_managers = User.objects.filter(groups__name='site-manager')
+            is_site_manager = False
+            for manager in site_managers:
+                if(username == manager.username):
+                    is_site_manager = True
+
+            # get number of results
+            num_results = request.POST['search-reports-num_results']
+            print(num_results)
+            show_all = True
+            if(num_results != ''):
+                show_all = False
+                num_results = int(num_results)
+            else:
+                num_results = 0
+
+            print(num_results)
+
+            # populate search results to pass back to javascript
             result_data = []
+            i = 0
             for result in search_results:
-                num_results += 1
-                result_data.append([result.short_desc, result.long_desc, result.owner.username])
+                if( (i >= num_results) and (show_all == False) ):
+                    break
+
+                if(is_site_manager == False):
+                    # check if report is private and user is not owner
+                    if( result.private and (result.owner.username != request.user.username)):
+                        # check if private report has been assigned to any groups
+                        if result.group == '' or result.group == 'Public':
+                            continue
+                        # get group associated with report
+                        g = Group.objects.get(name=result.group)
+                        # check if user is in group
+                        print(g.user_set.all())
+                        if request.user in g.user_set.all():
+                            # if user is in group append report to result_data
+                            access = "Public"
+                            if result.private:
+                                access = 'Private'
+                            result_data.append([result.short_desc, result.long_desc, result.owner.username, access])
+                            i += 1
+                    else: # report is public or user is the owner
+                        access = "Public"
+                        if result.private:
+                            access = 'Private'
+                        # append report to result_data
+                        result_data.append([result.short_desc, result.long_desc, result.owner.username, access])
+                        i += 1
+                else: # user is site_manager
+                    access = "Public"
+                    if result.private:
+                        access = 'Private'
+                    # append report to result_data
+                    result_data.append([result.short_desc, result.long_desc, result.owner.username, access])
+                    i += 1
+
+
             context_dict['search_results'] = result_data
 
             return HttpResponse(json.dumps(context_dict), content_type="application/json")
-            """
+
 
     else:
         # stay on current page
         return redirect('/index/')
 
 
-"""
-    if request.method == 'POST':
-        context_dict = {'short_desc' : ''}
-        report = Report.objects.filter(short_desc = request.POST.get('short_desc'))[0]
-        context_dict['short_desc'] = report.short_desc
-        context_dict['long_desc'] = report.long_desc
-        context_dict['time'] = report.time.strftime('%a %B %d, %I:%M:%S %p %Z')
-        context_dict['owner'] = report.owner.username
-        context_dict['file_name'] = 'No files associated with report.'
-        files = RFile.objects.filter(report=report)
-        for file in files:
-            context_dict['file_name'] = file.name
-        return HttpResponse(json.dumps(context_dict), content_type="application/json")
-    return redirect('/index/')
-"""
 def parse_search_criteria(user_input):
     criteria = []
     criteria = user_input.split(";")
@@ -440,7 +440,6 @@ def index(request):
         'is_manager': is_manager(request.user), # Is this user a manager?
         'site_managers_list' : get_managers(), # the list of current site-managers
         'users_list' : User.objects.all(),
-        'messages_list' : get_messages(request.user),
         'folders_list' : get_folders(request.user),
         'files_list' : get_files(request.user),
         'reports_list' : get_reports(request.user),
@@ -588,15 +587,66 @@ def send_message(request):
         sender = request.user
         recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
         message = request.POST.get('message')
-
-        new_msg = PrivateMessage(sender = sender, recipient = recipient, text = message)
-        new_msg.save()
+        if request.POST.get('encrypted') == 'true':
+            temp = SHA256.new(b'encrypted').digest()
+            aes = AES.new(temp[:16], mode=blockalgo.MODE_CFB, IV=temp[16:32], segment_size=8)
+            message = aes.encrypt(message.encode())
+            new_msg = PrivateMessage(sender = sender, recipient = recipient, text = 'encrypted', encrypted = True, cipher = message)
+            new_msg.save()
+        else:
+            new_msg = PrivateMessage(sender = sender, recipient = recipient, text = message, encrypted = False, cipher = b'')
+            new_msg.save()
+        return HttpResponse(json.dumps({}), content_type="application/json")
 
     return redirect('/index/')
 
 # gets all messages sent to a certain user
-def get_messages(user):
-    return PrivateMessage.objects.filter(recipient=user)
+def get_messages(request):
+    if request.method == 'POST':
+        sender = request.user
+        recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
+        messages = sorted(
+                (list(PrivateMessage.objects.filter(sender = recipient, recipient = request.user)) + (list(PrivateMessage.objects.filter(sender = request.user, recipient = recipient)) if sender != recipient else [])),
+                key=lambda msg: msg.time)
+        response = {'messages' : []}
+        for message in messages:
+            response['messages'].append({
+                'sender' : message.sender.username,
+                'time' : message.time.strftime('%a %B %d, %I:%M:%S %p %Z'),
+                'text' : message.text,
+                })
+        return HttpResponse(json.dumps(response), content_type="application/json")
+
+    return redirect('/index/')
+
+# gets all messages sent to a certain user
+def get_messages_decrypt(request):
+    if request.method == 'POST':
+        sender = request.user
+        recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
+        messages = sorted(
+                (list(PrivateMessage.objects.filter(sender = recipient, recipient = request.user)) + (list(PrivateMessage.objects.filter(sender = request.user, recipient = recipient)) if sender != recipient else [])),
+                key=lambda msg: msg.time)
+        response = {'messages' : []}
+        for message in messages:
+            if message.encrypted:
+                temp = SHA256.new(b'encrypted').digest()
+                aes = AES.new(temp[:16], mode=blockalgo.MODE_CFB, IV=temp[16:32], segment_size=8)
+                text = aes.decrypt(bytes(message.cipher)).decode("utf-8")
+                response['messages'].append({
+                    'sender' : message.sender.username,
+                    'time' : message.time.strftime('%a %B %d, %I:%M:%S %p %Z'),
+                    'text' : text,
+                    })
+            else:
+                response['messages'].append({
+                    'sender' : message.sender.username,
+                    'time' : message.time.strftime('%a %B %d, %I:%M:%S %p %Z'),
+                    'text' : message.text,
+                    })
+        return HttpResponse(json.dumps(response), content_type="application/json")
+
+    return redirect('/index/')
 
 def create_report(request):
     if request.method == 'POST':
@@ -646,14 +696,28 @@ def get_reports(user):
                 reports.append(report)
 
     return reports
-    #return Report.objects.filter(owner=user, folder=None)
-    return Report.objects.filter(owner=user, folder_id=None)
 
 def get_folders(user):
     return Folder.objects.filter(owner=user)
 
 def get_files(user):
-    return RFile.objects.filter(owner=user, encrypted=False)
+    files = []
+    for file in RFile.objects.all():
+        if file.encrypted == True:
+            continue
+
+        report = file.report
+
+        if file.owner == user:
+            files.append(file)
+        elif report.group == '' or report.group == 'Public':
+            continue
+        else:
+            group = Group.objects.get(name=report.group)
+            if group in user.groups.all():
+                files.append(file)
+
+    return files
 
 def view_report(request):
     if request.method == 'POST':
@@ -665,9 +729,12 @@ def view_report(request):
         context_dict['owner'] = report.owner.username
         context_dict['is_owner'] = (report.owner == request.user)
         context_dict['file_name'] = 'No files associated with report.'
+        context_dict['file_id'] = '-1'
         files = RFile.objects.filter(report=report)
         for file in files:
             context_dict['file_name'] = file.name
+            if not file.encrypted:
+                context_dict['file_id'] = str(file.id)
         return HttpResponse(json.dumps(context_dict), content_type="application/json")
     return redirect('/index/')
 
@@ -771,15 +838,12 @@ def standalone_login(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
-        print("Connected")
         if user is not None:
             # the password verified for the user
             if user.is_active:
-                print("Yay")
                 request.session['username'] = username
                 return HttpResponse(content='True')
         else:
-            print("Not yay")
             return HttpResponse(content='False')
 
 #@permission_classes(isAuthenticated)
@@ -787,10 +851,20 @@ class standalone_report_list(APIView):
 
     def get(self, request, username):
         user = get_object_or_404(User, username=username)
-        queryset = Report.objects.filter(
-            Q(owner=user) | Q(private=False)
-        )
-        serializer = Report_Serializer(queryset, many=True)
+        reports = Report.objects.all()
+        member = False
+        queryset1 = []
+        for report in reports:
+            group = None
+            if report.private and report.owner.username != username:
+                if report.group == "" or report.group == "Public":
+                    continue
+                g = Group.objects.get(name=report.group)
+                if user in g.user_set.all():
+                    queryset1.append(report)
+            else:
+                queryset1.append(report)
+        serializer = Report_Serializer(queryset1, many=True)
         return Response(serializer.data)
 
 

@@ -1,7 +1,34 @@
 $(document).ready(function() {
 
+  $('#search-help-checkbox').change( function() {
+      help_message = "";
+      if(this.checked) {
+          help_message += '<p>-- The parameters provided in each search field will be AND-ed together.</p>';
+          help_message += '<p>-- Colon (;) separated text within search fields will be OR-ed together.</p>';
+          help_message += '<p>-- Any and all search fields can be left blank, leaving all fields blank lists all reports you can access.</p>';
+          help_message += '<p>-- Leave \'Number of Results\' field blank to display all matching results.</p>';
+      }
+
+      $('#search-help-message').html(help_message);
+  });
+
   $('#search-form').on('submit', function(event) {
       event.preventDefault();
+
+      all = $('#search-reports-all').val();
+      short_desc = $('#search-reports-short_desc').val();
+      long_desc = $('#search-reports-long_desc').val();
+      owner = $('#search-reports-owner').val();
+      num_results = $('#search-reports-num_results').val();
+
+        data_dict = {
+            'search-reports-all' : all,
+            'search-reports-short_desc' : short_desc,
+            'search-reports-long_desc' : long_desc,
+            'search-reports-owner' : owner,
+            'search-reports-num_results' : num_results
+
+        };
 
       csrftoken = getCookie('csrftoken');
       $.ajaxSetup({
@@ -15,21 +42,23 @@ $(document).ready(function() {
       $.ajax({
           url: "/search_reports/",
           type: "POST",
-          data: {},
+          data: data_dict,
 
           success: function (json) {
 
               results = json['search_results'];
+              console.log(results);
               table_rows = '';
-              for( var i = 0; i < results.size(); i++) {
+              for( var i = 0; i < results.length; i++) {
                   table_rows += '<tr>';
-                  table_rows += '<td>' + results[i][0] + '</td>';
-                  table_rows += '<td>' + results[i][1] + '</td>';
-                  table_rows += '<td>' + results[i][2] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][0] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][1] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][2] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][3] + '</td>';
                   table_rows += '</tr>';
               }
 
-              $('#view-search-results').html(
+              $('#search-body').html(
                   table_rows
               );
           },
@@ -311,6 +340,148 @@ $(document).ready(function() {
       }
     })
   })
+
+  var getMessages = function(recipient) {
+    var data_dict = {
+      'recipient': recipient
+    };
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/get_messages/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        var messages = json['messages']
+        if(messages.length == 0) {
+          $('#message-viewport').html('<p><em>No messages found.</em></p>');
+        } else {
+          $('#message-viewport').html('<div class="list-group">');
+          for(var i in messages) {
+            var message = messages[i];
+            $('#message-viewport').append(
+                '<li class="list-group-item"><h4 class="list-group-item-heading">From ' + message['sender'] + ' at ' + message['time'] + ':</h4>' +
+                '<p class="list-group-item-text">' + message['text'] + '</p></li>'
+                );
+          }
+          $('#message-viewport').append('</div>');
+        }
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+  };
+
+  var decryptMessages = function(recipient) {
+    var data_dict = {
+      'recipient': recipient
+    };
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/get_messages_decrypt/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        var messages = json['messages']
+        if(messages.length == 0) {
+          $('#message-viewport').html('<p><em>No messages found.</em></p>');
+        } else {
+          $('#message-viewport').html('<div class="list-group">');
+          for(var i in messages) {
+            var message = messages[i];
+            $('#message-viewport').append(
+                '<li class="list-group-item"><h4 class="list-group-item-heading">From ' + message['sender'] + ' at ' + message['time'] + ':</h4>' +
+                '<p class="list-group-item-text">' + message['text'] + '</p></li>'
+                );
+          }
+          $('#message-viewport').append('</div>');
+        }
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+  };
+
+  $('#message-recipient').change(function() {
+    var recipient = $('#message-recipient').val();
+
+    $('#send-message-form-container').html(
+       '<form id="send-message-form" action="/send_message/" method="post" role="form">' +
+       '<div class="form-group">' +
+       '<div class="row"><input type="hidden" id="recipient" name="recipient" value="' + recipient + '"/>' +
+       '<div class="col-sm-12"><textarea rows="8" id="message" name="message" style="resize:none;" class="form-control"></textarea></div></div>' +
+       '<div class="row"><div class="col-sm-12"><label for="msg-encrypted">Encrypted: </label><input type="checkbox" id="msg-encrypted" name="encrypted" /></div></div>' +
+       '<div class="row"><div class="col-sm-12"><input type="submit" value="Send" class="form-control btn btn-primary" />' +
+       '</div></div></div></form>' +
+       '<form id="decrypt-message-form" action="/get_messages_decrypt/" method="post" role="form">' +
+       '<div class="form-group">' +
+       '<div class="row"><div class="col-sm-12"><input type="submit" value="Decrypt Messages" class="form-control btn btn-info" />' +
+       '</div></div></div></form>'
+        );
+
+    $('#decrypt-message-form').on('submit', function(event) {
+      event.preventDefault();
+      decryptMessages(recipient);
+    });
+
+    $('#send-message-form').on('submit', function(event) {
+      event.preventDefault();
+      var form = $(event.target);
+      var recipient = form.find('#recipient').val();
+      var messageText = form.find('#message').val();
+      var encrypted = form.find('#msg-encrypted')
+      var data_dict = {
+        'recipient' : recipient,
+        'message' : messageText,
+        'encrypted' : encrypted.prop('checked'),
+      };
+
+      csrftoken = getCookie('csrftoken');
+      $.ajaxSetup({
+          beforeSend: function(xhr, settings) {
+              if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                  xhr.setRequestHeader("X-CSRFToken", csrftoken);
+              }
+          }
+      });
+      $.ajax({
+        url: "/send_message/",
+        type: "POST",
+        data: data_dict,
+
+        success: function(json) {
+          getMessages(recipient);
+        },
+
+        error: function(xhr, errmsg, err) {
+          console.log('error');
+        }
+      })
+    });
+
+    getMessages(recipient);
+  });
 
   /* Add a Site Manager */
   $('#form-addmanager').on('submit', function(event) {
@@ -675,6 +846,9 @@ $(document).ready(function() {
               '<h4>' + json['time'] + '</h4>' +
               '<p>' + json['long_desc'] + '</p>' +
               '<p><em>File:</em> ' + json['file_name'] + '</p>' +
+              (json['file_id'] != '-1' ?
+              '<p><a href="/download/' + json['file_id'] + '"><button class="btn btn-primary">Download</button></a></p>'
+              : '') +
               (json['is_owner'] ? 
               '<p><form action="" class="begin-edit-report-form" method="POST">' +
               '<input type="hidden" name="report_name" value="' + json['short_desc'] + '" />' +
