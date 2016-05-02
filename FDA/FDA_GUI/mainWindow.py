@@ -229,11 +229,6 @@ class FileList(QtGui.QListWidget):
                     self.errorMessage.errorLabel.move(30, 75)
                     self.errorMessage.show()
 
-    """def raiseKeyError(self, window):
-        incorrectKey = QtGui.QLabel("Please set the decryption key", window)
-        incorrectKey.resize(incorrectKey.sizeHint())
-        incorrectKey.move(600, 600)"""
-
     #Opens a key_input window to set decryption key for a file
     def key_input(self, fileItem):
         self.keyIn2 = KeyInput()
@@ -432,9 +427,8 @@ class Window(QtGui.QMainWindow):
         while i < self.report_files.count():
             r = requests.get(base_path + "download/" + str(self.report_files.item(i).id), stream=True)
             self.report_files.item(i).path = home_file_path + "/Downloads" + "/" + self.report_files.item(i).filename
-            if not os.path.isfile(self.report_files.item(i).path):
-                with open(self.report_files.item(i).path, 'wb') as f:
-                    f.write(r.content)
+            with open(self.report_files.item(i).path, 'wb') as f:
+                f.write(r.content)
             i += 1
 
     #Open add file window for file encryption
