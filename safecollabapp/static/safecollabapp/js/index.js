@@ -312,6 +312,95 @@ $(document).ready(function() {
     })
   })
 
+  var getMessages = function(recipient) {
+    var data_dict = {
+      'recipient': recipient
+    };
+
+    csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $.ajax({
+      url: "/get_messages/",
+      type: "POST",
+      data: data_dict,
+
+      success: function(json) {
+        var messages = json['messages']
+        if(messages.length == 0) {
+          $('#message-viewport').html('<p><em>No messages found.</em></p>');
+        } else {
+          $('#message-viewport').html('<div class="list-group">');
+          for(var i in messages) {
+            var message = messages[i];
+            $('#message-viewport').append(
+                '<li class="list-group-item"><h4 class="list-group-item-heading">From ' + message['sender'] + ' at ' + message['time'] + ':</h4>' +
+                '<p class="list-group-item-text">' + message['text'] + '</p></li>'
+                );
+          }
+          $('#message-viewport').append('</div>');
+        }
+      },
+
+      error: function(xhr, errmsg, err) {
+        console.log('error');
+      }
+    })
+  };
+
+  $('#message-recipient').change(function() {
+    var recipient = $('#message-recipient').val();
+
+    $('#send-message-form-container').html(
+       '<form id="send-message-form" action="/send_message/" method="post" role="form">' +
+       '<div class="form-group">' +
+       '<div class="row"><input type="hidden" id="recipient" name="recipient" value="' + recipient + '"/>' +
+       '<div class="col-sm-12"><textarea rows="8" id="message" name="message" style="resize:none;" class="form-control"></textarea></div></div>' +
+       '<div class="row"><div class="col-sm-12"><input type="submit" value="Send" class="form-control btn btn-primary" />' +
+       '</div></div></div></form>'
+        );
+
+    $('#send-message-form').on('submit', function(event) {
+      event.preventDefault();
+      var form = $(event.target);
+      var recipient = form.find('#recipient').val();
+      var messageText = form.find('#message').val();
+      var data_dict = {
+        'recipient' : recipient,
+        'message' : messageText,
+      };
+
+      csrftoken = getCookie('csrftoken');
+      $.ajaxSetup({
+          beforeSend: function(xhr, settings) {
+              if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                  xhr.setRequestHeader("X-CSRFToken", csrftoken);
+              }
+          }
+      });
+      $.ajax({
+        url: "/send_message/",
+        type: "POST",
+        data: data_dict,
+
+        success: function(json) {
+          getMessages(recipient);
+        },
+
+        error: function(xhr, errmsg, err) {
+          console.log('error');
+        }
+      })
+    });
+
+    getMessages(recipient);
+  });
+
   /* Add a Site Manager */
   $('#form-addmanager').on('submit', function(event) {
     event.preventDefault();

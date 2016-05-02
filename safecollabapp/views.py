@@ -37,33 +37,6 @@ from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 
 
-def list(request):
-    # Handle file upload
-    if request.method == 'POST':
-        form = DocumentForm(request.POST, request.FILES)
-        if form.is_valid():
-
-            newdoc = Document(  name=request.POST['name'],
-                                description=request.POST['description'],
-                                docfile=request.FILES['docfile']
-                            )
-            newdoc.save()
-
-            # Redirect to the document list after POST
-            return HttpResponseRedirect(reverse('safecollabapp.views.list'))
-    else:
-        form = DocumentForm()  # A empty, unbound form
-
-    # Load documents for the list page
-    documents = Document.objects.all()
-
-    # Render list page with the documents and the form
-    return render_to_response(
-        'list.html',
-        {'documents': documents, 'form': form},
-        context_instance=RequestContext(request)
-    )
-
 # search report models within data base
 def search_reports(request):
 
@@ -440,7 +413,6 @@ def index(request):
         'is_manager': is_manager(request.user), # Is this user a manager?
         'site_managers_list' : get_managers(), # the list of current site-managers
         'users_list' : User.objects.all(),
-        'messages_list' : get_messages(request.user),
         'folders_list' : get_folders(request.user),
         'files_list' : get_files(request.user),
         'reports_list' : get_reports(request.user),
@@ -591,12 +563,28 @@ def send_message(request):
 
         new_msg = PrivateMessage(sender = sender, recipient = recipient, text = message)
         new_msg.save()
+        return HttpResponse(json.dumps({}), content_type="application/json")
 
     return redirect('/index/')
 
 # gets all messages sent to a certain user
-def get_messages(user):
-    return PrivateMessage.objects.filter(recipient=user)
+def get_messages(request):
+    if request.method == 'POST':
+        sender = request.user
+        recipient = User.objects.filter(username = request.POST.get('recipient'))[0]
+        messages = sorted(
+                (list(PrivateMessage.objects.filter(sender = recipient, recipient = request.user)) + (list(PrivateMessage.objects.filter(sender = request.user, recipient = recipient)) if sender != recipient else [])),
+                key=lambda msg: msg.time)
+        response = {'messages' : []}
+        for message in messages:
+            response['messages'].append({
+                'sender' : message.sender.username,
+                'time' : message.time.strftime('%a %B %d, %I:%M:%S %p %Z'),
+                'text' : message.text,
+                })
+        return HttpResponse(json.dumps(response), content_type="application/json")
+
+    return redirect('/index/')
 
 def create_report(request):
     if request.method == 'POST':
