@@ -125,32 +125,16 @@ def search_reports(request):
             for item in user_input['owner']:
                 Q_objects['owner'] |= Q(owner__username__icontains=item)
 
-            # get number of results
-            num_results = request.POST['search-reports-num_results']
-
             # get search results
             search_results = None
-            if(num_results == ''):
-                # select all Reports where name or description contains keyword
-                search_results = Report.objects.filter(
-                                Q_objects['all']
-                                & Q_objects['short_desc']
-                                & Q_objects['long_desc']
-                                & Q_objects['owner']
-                                ).order_by(Lower('short_desc').desc())
-            else:
-                num_result = int(num_results)
-                # select the first num_results Reports where name or description contains keyword
-                search_results = Report.objects.filter(
-                                    Q_objects['all']
-                                    & Q_objects['short_desc']
-                                    & Q_objects['long_desc']
-                                    & Q_objects['owner']
-                                    ).order_by(Lower('short_desc').desc())[:num_results]
+            # select all Reports where name or description contains keyword
+            search_results = Report.objects.filter(
+                            Q_objects['all']
+                            & Q_objects['short_desc']
+                            & Q_objects['long_desc']
+                            & Q_objects['owner']
+                            ).order_by(Lower('short_desc').asc())
 
-            # create access dict for search results
-
-            #return HttpResponseRedirect(reverse('safecollabapp.views.search'))
             """
             # Render index page with the search results and the form
             return render_to_response(
@@ -161,9 +145,67 @@ def search_reports(request):
 
             """
             # fill context_dict with fields from search_results to be displayed
+
+            # check if user is site-manager
+            username = request.user.username
+            site_managers = User.objects.filter(groups__name='site-manager')
+            is_site_manager = False
+            for manager in site_managers:
+                if(username == manager.username):
+                    is_site_manager = True
+
+            # get number of results
+            num_results = request.POST['search-reports-num_results']
+            print(num_results)
+            show_all = True
+            if(num_results != ''):
+                show_all = False
+                num_results = int(num_results)
+            else:
+                num_results = 0
+
+            print(num_results)
+
+            # populate search results to pass back to javascript
             result_data = []
+            i = 0
             for result in search_results:
-                result_data.append([result.short_desc, result.long_desc, result.owner.username])
+                if( (i >= num_results) and (show_all == False) ):
+                    break
+
+                if(is_site_manager == False):
+                    # check if report is private and user is not owner
+                    if( result.private and (result.owner.username != request.user.username)):
+                        # check if private report has been assigned to any groups
+                        if result.group == '' or result.group == 'Public':
+                            continue
+                        # get group associated with report
+                        g = Group.objects.get(name=result.group)
+                        # check if user is in group
+                        print(g.user_set.all())
+                        if request.user in g.user_set.all():
+                            # if user is in group append report to result_data
+                            access = "Public"
+                            if result.private:
+                                access = 'Private'
+                            result_data.append([result.short_desc, result.long_desc, result.owner.username, access])
+                            i += 1
+                    else: # report is public or user is the owner
+                        access = "Public"
+                        if result.private:
+                            access = 'Private'
+                        # append report to result_data
+                        result_data.append([result.short_desc, result.long_desc, result.owner.username, access])
+                        i += 1
+                else: # user is site_manager
+                    access = "Public"
+                    if result.private:
+                        access = 'Private'
+                    # append report to result_data
+                    result_data.append([result.short_desc, result.long_desc, result.owner.username, access])
+                    i += 1
+
+
             context_dict['search_results'] = result_data
 
             return HttpResponse(json.dumps(context_dict), content_type="application/json")
