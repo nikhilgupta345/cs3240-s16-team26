@@ -1,7 +1,34 @@
 $(document).ready(function() {
 
+  $('#search-help-checkbox').change( function() {
+      help_message = "";
+      if(this.checked) {
+          help_message += '<p>-- The parameters provided in each search field will be AND-ed together.</p>';
+          help_message += '<p>-- Colon (;) separated text within search fields will be OR-ed together.</p>';
+          help_message += '<p>-- Any and all search fields can be left blank, leaving all fields blank lists all reports you can access.</p>';
+          help_message += '<p>-- Leave \'Number of Results\' field blank to display all matching results.</p>';
+      }
+
+      $('#search-help-message').html(help_message);
+  });
+
   $('#search-form').on('submit', function(event) {
       event.preventDefault();
+
+      all = $('#search-reports-all').val();
+      short_desc = $('#search-reports-short_desc').val();
+      long_desc = $('#search-reports-long_desc').val();
+      owner = $('#search-reports-owner').val();
+      num_results = $('#search-reports-num_results').val();
+
+        data_dict = {
+            'search-reports-all' : all,
+            'search-reports-short_desc' : short_desc,
+            'search-reports-long_desc' : long_desc,
+            'search-reports-owner' : owner,
+            'search-reports-num_results' : num_results
+
+        };
 
       csrftoken = getCookie('csrftoken');
       $.ajaxSetup({
@@ -15,21 +42,23 @@ $(document).ready(function() {
       $.ajax({
           url: "/search_reports/",
           type: "POST",
-          data: {},
+          data: data_dict,
 
           success: function (json) {
 
               results = json['search_results'];
+              console.log(results);
               table_rows = '';
-              for( var i = 0; i < results.size(); i++) {
+              for( var i = 0; i < results.length; i++) {
                   table_rows += '<tr>';
-                  table_rows += '<td>' + results[i][0] + '</td>';
-                  table_rows += '<td>' + results[i][1] + '</td>';
-                  table_rows += '<td>' + results[i][2] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][0] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][1] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][2] + '</td>';
+                  table_rows += '<td style="word-wrap: break-word">' + results[i][3] + '</td>';
                   table_rows += '</tr>';
               }
 
-              $('#view-search-results').html(
+              $('#search-body').html(
                   table_rows
               );
           },

@@ -634,14 +634,28 @@ def get_reports(user):
                 reports.append(report)
 
     return reports
-    #return Report.objects.filter(owner=user, folder=None)
-    return Report.objects.filter(owner=user, folder_id=None)
 
 def get_folders(user):
     return Folder.objects.filter(owner=user)
 
 def get_files(user):
-    return RFile.objects.filter(owner=user, encrypted=False)
+    files = []
+    for file in RFile.objects.all():
+        if file.encrypted == True:
+            continue
+
+        report = file.report
+
+        if file.owner == user:
+            files.append(file)
+        elif report.group == '' or report.group == 'Public':
+            continue
+        else:
+            group = Group.objects.get(name=report.group)
+            if group in user.groups.all():
+                files.append(file)
+
+    return files
 
 def view_report(request):
     if request.method == 'POST':
