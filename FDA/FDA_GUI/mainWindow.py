@@ -19,9 +19,9 @@ application = get_wsgi_application()
 
 fs = FileSystemStorage(location = '/media/')
 
-#base_path = "http://127.0.0.1:8000/"
+base_path = "http://127.0.0.1:8000/"
 
-base_path = "http://damp-sierra-38619.herokuapp.com/"
+#base_path = "http://damp-sierra-38619.herokuapp.com/"
 
 home = expanduser("~")
 home_file_path = copy.deepcopy(home)
@@ -412,8 +412,9 @@ class Window(QtGui.QMainWindow):
         report_list = r.json()
         for report in report_list:
             private = ""
+            group = ""
             if report['private'] == True:
-                private = " (Private: " + str(self.username) + ")"
+                private = " (Private)"
             report1 = Report(report['short_desc'] + private, report['owner'], report['files'], report['long_desc'])
             self.reportList.addItem(report1)
 
